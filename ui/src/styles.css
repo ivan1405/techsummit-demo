@@ -192,6 +192,14 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .check-chip { display: inline-block; margin: 1px 4px 1px 0; font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--hub-success-border); color: var(--hub-success-text); background: var(--hub-success-fill); }
 .check-chip.fail { border-color: var(--hub-danger-border); color: var(--hub-danger-text); background: var(--hub-danger-fill); }
 .panel h3 { margin-top: 28px; }
+.connections { margin: 8px 0; }
+.conn-manage { border: 1px dashed var(--hub-line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--hub-surface); }
+.conn-form { align-items: flex-end; }
+.schema-browser { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 8px 0; }
+.schema-browser button { text-align: left; background: var(--hub-surface); border: 1px solid var(--hub-line); border-radius: 8px; padding: 8px 10px; color: var(--hub-copy); font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.schema-browser button:hover { border-color: var(--hub-steel-300); }
+.schema-browser button.active { border-color: var(--hub-red); box-shadow: inset 3px 0 var(--hub-red); }
+.schema-browser .cols { color: var(--hub-muted); font-family: var(--font-mono); font-size: 11px; }
 .source-graph { border: 1px solid var(--hub-line); border-radius: 8px; margin: 10px 0; overflow-x: auto; }
 
 @media (max-width: 1100px) {
