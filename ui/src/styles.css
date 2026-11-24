@@ -66,7 +66,7 @@ td.num { text-align: right; }
 
 .panel { padding: 24px; overflow: auto; height: 100%; }
 
-.lineage { display: grid; grid-template-columns: 1fr 360px; height: 100%; }
+.lineage { display: grid; grid-template-columns: 1fr 320px; height: 100%; }
 .graph { overflow: auto; padding: 16px; }
 .legend { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 12px; }
 .chip { padding: 2px 8px; border-radius: 999px; color: #0f172a; font-weight: 600; }

@@ -7,7 +7,11 @@ import Quality from "./components/Quality.jsx";
 const TABS = { chat: "Chat", lineage: "Lineage", quality: "Data quality" };
 
 export default function App() {
-  const [tab, setTab] = useState("chat");
+  const [tab, setTabState] = useState(() => (location.hash.slice(1) in TABS ? location.hash.slice(1) : "chat"));
+  const setTab = (id) => {
+    setTabState(id);
+    history.replaceState(null, "", `#${id}`);
+  };
   const [health, setHealth] = useState(null);
 
   useEffect(() => {

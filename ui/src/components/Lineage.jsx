@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 
-const NODE_W = 170;
+const NODE_W = 150;
 const NODE_H = 44;
-const COL_GAP = 70;
+const COL_GAP = 48;
 const ROW_GAP = 18;
 
 function layout(nodes, edges) {
