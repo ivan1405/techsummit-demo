@@ -22,3 +22,14 @@ def test_pii_tags_by_name_and_follow_lineage():
     assert tags["gold.customer_360.contact"] == ("email", "bronze.customers.email")
     assert tags["gold.daily.emails"] == ("", "") and tags["gold.sales.product_name"] == ("", "")
     assert tags["bronze.loyalty.member.email"][0] == "email"
+
+
+def test_join_key_names_do_not_look_like_aggregates():
+    rows = dictionary.tag_pii([
+        {"dataset": "silver.customers", "column_name": "full_name", "upstream": "", "transformation": ""},
+        {"dataset": "gold.tickets", "column_name": "customers_full_name", "upstream": "silver.customers.full_name",
+         "transformation": "joined from silver.customers on account_id"},
+        {"dataset": "gold.tickets", "column_name": "customers", "upstream": "silver.customers.full_name",
+         "transformation": "count_distinct(full_name)"},
+    ])
+    assert [r["pii"] for r in rows] == ["name", "name", ""]

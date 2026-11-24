@@ -129,7 +129,7 @@ PII_PATTERNS = {
     "birth_date": re.compile(r"(^|_)(birth_?date|date_of_birth|dob)(_|$)"),
 }
 # Aggregates and hashes of personal data are not personal data themselves.
-NOT_PROPAGATED = re.compile(r"count|sum|avg|mean|min|max|hash", re.I)
+NOT_PROPAGATED = re.compile(r"(?<![a-z])(count|sum|avg|mean|min|max|hash)(?![a-z])", re.I)
 
 
 def describe(dataset: str, column: str) -> str:
