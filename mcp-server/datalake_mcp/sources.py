@@ -1,5 +1,5 @@
-"""Stage a candidate data source (file, JSON object or database table), profile it, suggest how its
-columns link to the lake and validate those links. Nothing is written to the lake."""
+"""Stage a candidate data source (file, JSON object, database table or a documented schema), profile it,
+suggest how its columns link to the lake and validate those links. Nothing is written to the lake."""
 
 import csv
 import io
@@ -19,6 +19,8 @@ NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 TABLE_RE = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)?$")
 RELATIONS = ("join_key", "maps_to", "new")
 KEY_RATIO = 0.95
+REF_RE = re.compile(r"\b((?:silver|gold)\.[a-z0-9_]+\.[a-z0-9_]+)\b")
+SCHEMA_ONLY = "Documented schema only; values are checked once the data is connected."
 
 
 class SourceError(ValueError):
@@ -152,6 +154,45 @@ def read_db(url: str, table: str = "", query: str = "") -> pa.Table:
     return to_table([dict(zip(cols, r)) for r in rows])
 
 
+def _arrow_type(declared: str) -> pa.DataType:
+    t = declared.strip().lower()
+    if re.match(r"(big|small|tiny)?int|integer|serial|long", t):
+        return pa.int64()
+    if re.match(r"dec|num|float|double|real|money", t):
+        return pa.float64()
+    if t.startswith("bool"):
+        return pa.bool_()
+    return pa.string()
+
+
+def schema_table(columns: list[dict]) -> pa.Table:
+    """Empty, typed table for a source that is documented (e.g. in Confluence) but not connected yet."""
+    fields = {_clean_name(c["name"]): _arrow_type(str(c.get("type") or "")) for c in columns
+              if isinstance(c, dict) and c.get("name")}
+    if not fields:
+        raise SourceError("The documented schema has no columns.")
+    return pa.table({n: pa.array([], t) for n, t in fields.items()})
+
+
+def clean_docs(docs: list[dict] | None) -> dict[str, dict]:
+    """{column: {description, type, relation, target}} from documented schema rows.
+
+    A 'links_to' text naming a silver/gold column becomes a hint: join_key if it mentions a join or key,
+    otherwise maps_to.
+    """
+    out = {}
+    for d in docs or []:
+        if not isinstance(d, dict) or not d.get("name"):
+            continue
+        hint = str(d.get("links_to") or "")
+        ref = REF_RE.search(hint.lower())
+        relation = ("join_key" if re.search(r"join|key", hint, re.I) else "maps_to") if ref else None
+        out[_clean_name(d["name"])] = {"description": str(d.get("description") or "")[:300],
+                                       "type": str(d.get("type") or "")[:40],
+                                       "relation": relation, "target": ref.group(1) if ref else None}
+    return out
+
+
 # ---- profiling ----------------------------------------------------------------------------
 
 def _type(t: pa.DataType) -> str:
@@ -194,11 +235,14 @@ class SourceStore:
         self._lock = threading.Lock()
         self._sources: dict[str, dict] = {}
 
-    def stage(self, name: str, kind: str, label: str, table: pa.Table) -> dict:
+    def stage(self, name: str, kind: str, label: str, table: pa.Table, docs: list[dict] | None = None,
+              doc: dict | None = None) -> dict:
         if not NAME_RE.match(name):
             raise SourceError("Name must be snake_case (a-z, 0-9, _), e.g. support_tickets.")
         entry = {"name": name, "kind": kind, "dataset": f"source.{label}", "rows": table.num_rows,
-                 "columns": profile(table), "sample": table.slice(0, 5).to_pylist()}
+                 "columns": profile(table), "sample": table.slice(0, 5).to_pylist(),
+                 "schema_only": kind == "schema", "docs": clean_docs(docs),
+                 "doc": {k: str((doc or {}).get(k, ""))[:300] for k in ("title", "url")} if doc else None}
         with self._lock:
             self._sources[name] = {**entry, "table": table}
         return entry
@@ -267,6 +311,32 @@ def suggest(source: dict, targets: list[dict], values_of) -> list[dict]:
     return links
 
 
+def apply_docs(links: list[dict], source: dict, targets: dict[str, dict]) -> dict:
+    """Let documented hints override or confirm heuristic links; report documentation coverage."""
+    docs = source.get("docs") or {}
+    if not docs:
+        return {}
+    title = (source.get("doc") or {}).get("title") or "the documentation"
+    for lk in links:
+        d = docs.get(lk["source_column"])
+        if not d:
+            continue
+        lk["description"] = d["description"]
+        hint, ref = d["relation"], d["target"]
+        if not ref:
+            continue
+        if ref not in targets:
+            lk["reason"] += f" {title} points to {ref}, which is not in the lake."
+        elif (lk["relation"], lk["target"]) == (hint, ref):
+            lk.update(confidence=round(min(1.0, lk["confidence"] + 0.1), 3), reason=f"Confirmed by {title}. {lk['reason']}")
+        else:
+            lk.update(relation=hint, target=ref, confidence=round(max(lk["confidence"], 0.9), 3),
+                      reason=f"Documented in {title} as {hint.replace('_', ' ')} to {ref}.")
+    cols = {c["column_name"] for c in source["columns"]}
+    return {**(source.get("doc") or {}), "documented": len(docs),
+            "missing_in_data": sorted(set(docs) - cols), "undocumented": sorted(cols - set(docs))}
+
+
 def validate(source: dict, links: list[dict], targets: dict[str, dict], values_of) -> list[dict]:
     """Check each confirmed link against real data."""
     table: pa.Table = source["table"]
@@ -290,13 +360,18 @@ def validate(source: dict, links: list[dict], targets: dict[str, dict], values_o
             check.update(status="fail", message=f"{ref} is not a column in the lake.")
             continue
         t = targets[ref]
+        if _family(t["data_type"]) != _family(types[col]):
+            check.update(status="warn", message=f"Type mismatch: {types[col]} vs {t['data_type']}.")
+            continue
+        if source.get("schema_only"):
+            fan_out = rel == "join_key" and not t["is_key"]
+            check.update(status="warn", message=SCHEMA_ONLY + (f" {ref} is not unique: the join fans out." if fan_out else ""))
+            continue
         src_vals = distinct(table.column(col).to_pylist())
         tgt_vals = values_of(ref)
         check["overlap"] = ov = overlap(src_vals, tgt_vals)
         orphans = sorted(src_vals - tgt_vals)
-        if _family(t["data_type"]) != _family(types[col]):
-            check.update(status="warn", message=f"Type mismatch: {types[col]} vs {t['data_type']}.")
-        elif rel == "join_key":
+        if rel == "join_key":
             if ov < 0.5:
                 check.update(status="fail", message=f"Only {ov:.0%} of values match {ref}; this is not a valid join.")
             elif orphans:
@@ -308,6 +383,10 @@ def validate(source: dict, links: list[dict], targets: dict[str, dict], values_o
                 check.update(status="warn", message=(check["message"] + f" {ref} is not unique: the join fans out.").strip())
         else:
             check["message"] = f"Types match; {ov:.0%} of values also appear in {ref}."
+    title = (source.get("doc") or {}).get("title") or "the documentation"
+    checks += [{"source_column": c, "relation": "documented", "target": None, "status": "warn", "overlap": None,
+                "message": f"Documented in {title} but not in the data."}
+               for c in sorted(set(source.get("docs") or {}) - set(types))]
     return checks
 
 
