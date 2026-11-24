@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 
-const NODE_W = 165;
-const NODE_H = 44;
+export const NODE_W = 165;
+export const NODE_H = 44;
 const COL_GAP = 40;
 const ROW_GAP = 18;
 
-function layout(nodes, edges) {
+export function layout(nodes, edges) {
   const depth = {};
   const incoming = (id) => edges.filter((e) => e.target === id).map((e) => e.source);
   const visit = (id, seen = new Set()) => {
