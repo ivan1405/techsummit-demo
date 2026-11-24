@@ -9,11 +9,13 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from . import sources
 from .catalog import DEFAULT_MAX_ROWS, Catalog, QueryError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 catalog = Catalog.from_env()
+staged = sources.SourceStore()
 
 mcp = FastMCP(
     "datalake",
@@ -35,7 +37,7 @@ mcp = FastMCP(
 def _safe(fn, *args, **kwargs) -> str:
     try:
         return json.dumps(fn(*args, **kwargs), default=str)
-    except QueryError as exc:
+    except (QueryError, sources.SourceError) as exc:
         return json.dumps({"error": str(exc)})
 
 
@@ -103,6 +105,47 @@ def analyze_change_impact(changes: list[dict]) -> str:
     broken (all inputs lost) or impacted (some input lost, renamed or with new logic).
     """
     return _safe(catalog.impact_analysis, changes)
+
+
+def _stage(kind: str, name: str, filename: str, content: str, url: str, table: str, query: str) -> dict:
+    if kind == "file":
+        label, data = filename, sources.read_file(filename, content)
+    elif kind == "json":
+        label, data = f"{name}.json", sources.read_json(content)
+    elif kind == "database":
+        label, data = f"{name}.db", sources.read_db(url, table, query)
+    else:
+        raise sources.SourceError("kind must be file, json or database.")
+    return staged.stage(name, kind, label, data)
+
+
+@mcp.tool()
+def stage_source(kind: str, name: str, filename: str = "", content: str = "", url: str = "", table: str = "",
+                 query: str = "") -> str:
+    """Stage and profile a candidate data source WITHOUT ingesting it.
+
+    kind='file' (filename .csv/.json/.jsonl + content), kind='json' (content = a JSON object or array)
+    or kind='database' (url postgresql://... or sqlite:///..., plus a table or a single SELECT query;
+    read-only, at most 5000 rows). name is the snake_case dataset name, e.g. 'support_tickets'.
+    """
+    return _safe(_stage, kind, name, filename, content, url, table, query)
+
+
+@mcp.tool()
+def suggest_source_links(name: str) -> str:
+    """Suggest how each column of a staged source links to existing silver/gold columns
+    (join_key, maps_to or new), using name similarity and real value overlap."""
+    return _safe(lambda: catalog.suggest_links(staged.get(name)))
+
+
+@mcp.tool()
+def validate_source_links(name: str, links: list[dict], feed: str = "") -> str:
+    """Validate confirmed links of a staged source against real data and preview the lineage impact.
+
+    links: [{source_column, relation: join_key|maps_to|new, target: 'layer.dataset.column'}].
+    feed: dataset the source feeds (existing or new, default gold.<name>).
+    """
+    return _safe(lambda: catalog.validate_links(staged.get(name), links, feed))
 
 
 @mcp.custom_route("/health", methods=["GET"])
