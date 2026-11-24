@@ -37,12 +37,16 @@ DEFAULT_MAX_ROWS = 200
 
 
 READER, ANALYST = "reader", "analyst"
-# Masks per PII tag for the reader role; analysts see raw values.
+# Reader masks per PII tag: a hint plus a short stable token (md5 prefix), so equal values stay equal and readers can
+# still count distinct values and join on masked columns. Analysts see raw values.
+_TOKEN = "'***-' || left(md5(CAST({c} AS VARCHAR)), 6)"
 MASKS = {
-    "email": "regexp_replace(CAST({c} AS VARCHAR), '^(.)[^@]*@', '\\1***@')",
-    "name": "CASE WHEN {c} IS NULL THEN NULL ELSE left(CAST({c} AS VARCHAR), 1) || '***' END",
+    "email": "CASE WHEN {c} IS NULL THEN NULL WHEN contains(CAST({c} AS VARCHAR), '@') THEN "
+             "left(CAST({c} AS VARCHAR), 1) || " + _TOKEN + " || regexp_extract(CAST({c} AS VARCHAR), '@[^@]*$') "
+             "ELSE " + _TOKEN + " END",
+    "name": "CASE WHEN {c} IS NULL THEN NULL ELSE left(CAST({c} AS VARCHAR), 1) || " + _TOKEN + " END",
 }
-DEFAULT_MASK = "CASE WHEN {c} IS NULL THEN NULL ELSE '***' END"
+DEFAULT_MASK = "CASE WHEN {c} IS NULL THEN NULL ELSE " + _TOKEN + " END"
 MASKED = "***"
 
 
