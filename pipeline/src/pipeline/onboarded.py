@@ -4,23 +4,23 @@ by the same pipeline run as the core sources."""
 import io
 import json
 import re
-import sqlite3
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import pandas as pd
 from botocore.exceptions import ClientError
 
+from . import connectors
 from .gold import GOLD_INPUTS
 from .lake import Lake
 from .lineage import ColumnLineage
 
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 FEED_RE = re.compile(r"^gold\.[a-z][a-z0-9_]*$")
-TABLE_RE = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)?$")
-KINDS = ("file", "json", "database")
+KINDS = ("file", "json", "database", "connection")
 MAX_ROWS = 50_000
 PREFIX = "sources/"
+CONN_PREFIX = "connections/"
+CONN_NAME_RE = re.compile(r"^[a-z][a-z0-9_-]{0,40}$")
 CORE_GOLD = set(GOLD_INPUTS)
 
 
@@ -32,7 +32,58 @@ class OnboardError(ValueError):
 
 def label(spec: dict) -> str:
     """Source dataset id suffix: source.<label> (matches the MCP staging labels)."""
+    if spec["kind"] == "connection":
+        return spec.get("label") or f"{spec['name']}.db"
     return {"file": spec.get("filename", ""), "json": f"{spec['name']}.json", "database": f"{spec['name']}.db"}[spec["kind"]]
+
+
+# ---- named connections --------------------------------------------------------------------
+
+def save_connection(lake: Lake, conn: dict) -> dict:
+    name, url = conn.get("name", ""), (conn.get("url") or "").strip()
+    if not CONN_NAME_RE.match(name):
+        raise OnboardError("Connection name must be lowercase letters, digits, - or _.")
+    try:
+        info = connectors.test(url)
+    except connectors.ConnectorError as exc:
+        raise OnboardError(f"Connection test failed: {exc}") from exc
+    record = {"name": name, "url": url, "type": info["type"], "description": conn.get("description", ""),
+              "saved_at": datetime.now(timezone.utc).isoformat()}
+    lake.put_bytes(lake.settings.registry_bucket, f"{CONN_PREFIX}{name}.json", json.dumps(record).encode())
+    return {**public_connection(record), "tables": info["tables"]}
+
+
+def get_connection(lake: Lake, name: str) -> dict:
+    try:
+        return json.loads(lake.get_bytes(lake.settings.registry_bucket, f"{CONN_PREFIX}{name}.json"))
+    except ClientError as exc:
+        raise OnboardError(f"Unknown connection '{name}'.") from exc
+
+
+def list_connections(lake: Lake) -> list[dict]:
+    try:
+        objs = lake.s3.list_objects_v2(Bucket=lake.settings.registry_bucket, Prefix=CONN_PREFIX).get("Contents", [])
+    except ClientError:
+        return []
+    return [public_connection(json.loads(lake.get_bytes(lake.settings.registry_bucket, o["Key"])))
+            for o in sorted(objs, key=lambda o: o["Key"])]
+
+
+def delete_connection(lake: Lake, name: str) -> None:
+    get_connection(lake, name)
+    users = [s["name"] for s in load(lake) if s.get("connection") == name]
+    if users:
+        raise OnboardError(f"Connection {name} is used by onboarded source(s): {', '.join(users)}.")
+    lake.s3.delete_object(Bucket=lake.settings.registry_bucket, Key=f"{CONN_PREFIX}{name}.json")
+
+
+def public_connection(conn: dict) -> dict:
+    return {**conn, "url": connectors.mask(conn["url"])}
+
+
+def connection_label(lake: Lake, name: str, conn_name: str) -> str:
+    url = get_connection(lake, conn_name)["url"]
+    return connectors.file_name(url) if connectors.kind(url) == "http" else f"{name}.db"
 
 
 def check_spec(spec: dict) -> dict:
@@ -45,6 +96,8 @@ def check_spec(spec: dict) -> dict:
         raise OnboardError("filename must be a .csv, .json or .jsonl file name.")
     if kind == "database" and not spec.get("url"):
         raise OnboardError("url is required for database sources.")
+    if kind == "connection" and not spec.get("connection"):
+        raise OnboardError("connection is required for connection sources.")
     feed = spec.get("feed") or f"gold.{name}"
     if not FEED_RE.match(feed):
         raise OnboardError("feed must look like gold.<name>.")
@@ -54,7 +107,7 @@ def check_spec(spec: dict) -> dict:
             raise OnboardError(f"Invalid relation for {lk['source_column']}.")
         if lk["relation"] != "new" and not re.match(r"^(silver|gold)\.\w+\.\w+$", lk.get("target") or ""):
             raise OnboardError(f"{lk['source_column']}: target must be a silver/gold column.")
-    keep = ("name", "kind", "filename", "url", "table", "query")
+    keep = ("name", "kind", "filename", "url", "table", "query", "connection", "label")
     return {**{k: spec.get(k, "") for k in keep}, "feed": feed, "links": links,
             "accepted_at": datetime.now(timezone.utc).isoformat()}
 
@@ -62,7 +115,7 @@ def check_spec(spec: dict) -> dict:
 def register(lake: Lake, spec: dict, content: str = "") -> dict:
     spec = check_spec(spec)
     bucket = lake.settings.registry_bucket
-    if spec["kind"] != "database":
+    if spec["kind"] in ("file", "json"):
         if not content:
             raise OnboardError("content is required for file and JSON sources.")
         lake.put_bytes(bucket, f"{PREFIX}{spec['name']}/{label(spec)}", content.encode())
@@ -96,46 +149,18 @@ def public(spec: dict) -> dict:
 
 # ---- extract ------------------------------------------------------------------------------
 
-def _scalar(v):
-    if isinstance(v, Decimal):
-        return float(v)
-    if hasattr(v, "isoformat"):
-        return v.isoformat()
-    return v
-
-
 def extract(lake: Lake, spec: dict) -> tuple[str, bytes]:
     """Raw bytes of the source as delivered (database sources are snapshotted to JSONL)."""
-    if spec["kind"] != "database":
+    if spec["kind"] in ("file", "json"):
         return label(spec), lake.get_bytes(lake.settings.registry_bucket, f"{PREFIX}{spec['name']}/{label(spec)}")
-    if spec.get("table"):
-        if not TABLE_RE.match(spec["table"]):
-            raise OnboardError("Invalid table name.")
-        sql = "SELECT * FROM " + ".".join(f'"{p}"' for p in spec["table"].split("."))
-    else:
-        sql = spec.get("query", "").strip().rstrip(";")
-        if not re.match(r"(?is)^(select|with)\b", sql) or ";" in sql:
-            raise OnboardError("Query must be a single SELECT statement.")
-    sql = f"SELECT * FROM ({sql}) AS src LIMIT {MAX_ROWS}"
-    url = spec["url"]
-    if url.startswith(("postgresql://", "postgres://")):
-        import psycopg
-
-        with psycopg.connect(url, connect_timeout=5,
-                             options="-c default_transaction_read_only=on -c statement_timeout=30000") as conn:
-            cur = conn.execute(sql)
-            cols, rows = [d.name for d in cur.description], cur.fetchall()
-    elif url.startswith("sqlite:///"):
-        conn = sqlite3.connect(f"file:{url.removeprefix('sqlite:///')}?mode=ro", uri=True)
-        try:
-            cur = conn.execute(sql)
-            cols, rows = [d[0] for d in cur.description], cur.fetchall()
-        finally:
-            conn.close()
-    else:
-        raise OnboardError("Unsupported database URL.")
-    lines = (json.dumps({c: _scalar(v) for c, v in zip(cols, r)}, default=str) for r in rows)
-    return f"{spec['name']}.jsonl", "\n".join(lines).encode()
+    url = get_connection(lake, spec["connection"])["url"] if spec["kind"] == "connection" else spec["url"]
+    try:
+        if connectors.kind(url) == "http":
+            return connectors.file_name(url), connectors._fetch(url)
+        rows = connectors.read(url, spec.get("table", ""), spec.get("query", ""), MAX_ROWS)
+    except connectors.ConnectorError as exc:
+        raise OnboardError(str(exc)) from exc
+    return f"{spec['name']}.jsonl", "\n".join(json.dumps(r, default=str) for r in rows).encode()
 
 
 def _clean_name(name: str) -> str:
@@ -254,10 +279,10 @@ def descriptions(spec: dict, columns: list[str]) -> dict[str, str]:
 def preview(lake: Lake, spec: dict, content: str = "") -> dict:
     """Dry run before registering: parse and clean the source and check it can feed its target."""
     spec = check_spec(spec)
-    if spec["kind"] == "database":
-        filename, data = extract(lake, spec)
-    else:
+    if spec["kind"] in ("file", "json"):
         filename, data = label(spec), content.encode()
+    else:
+        filename, data = extract(lake, spec)
     silver_df, dropped, _ = clean(raw_frame(filename, data), spec)
     missing = [c for c, _, _ in joins(spec) if c not in silver_df.columns]
     if missing:
