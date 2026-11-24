@@ -256,7 +256,7 @@ class Catalog:
             name = r["dataset"].split(".", 1)[1]
             entry = out.setdefault(r["dataset"], {
                 "dataset": r["dataset"], "layer": r["layer"], "rows": rows_out.get(r["dataset"]),
-                "description": TABLE_DOCS.get(name) if r["layer"] == "gold" else docs.get(r["dataset"], ""),
+                "description": (TABLE_DOCS.get(name) if r["layer"] == "gold" else None) or docs.get(r["dataset"], ""),
                 "columns": [],
             })
             haystack = " ".join(str(r[k] or "") for k in ("dataset", "column_name", "description", "upstream"))
