@@ -130,6 +130,14 @@ def get_run_history(limit: int = 20) -> str:
 
 
 @mcp.tool()
+def get_alerts(limit: int = 20) -> str:
+    """Operational alerts: active alerts of the latest pipeline run (late source deliveries vs their SLA, failed data
+    contracts, failed onboarded sources), the most recent alerts across runs, and each source's last delivery. Use it
+    to answer 'is any data late?' or 'are there any alerts?'."""
+    return _safe(catalog.alerts, limit)
+
+
+@mcp.tool()
 def compare_runs(run_id: str = "", base_run_id: str = "") -> str:
     """Run-to-run diff. Defaults: the latest run vs the run before it. Per dataset: rows before/after, delta
     and %, columns added/removed and type changes; plus changed data-quality rule counts and contract checks.

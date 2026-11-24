@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api.js";
+import Ops from "./Ops.jsx";
 
 const short = (id) => (id ? id.slice(0, 8) : "");
 const when = (iso) => (iso ? new Date(iso).toLocaleString() : "");
@@ -99,7 +100,7 @@ function Diff({ diff, onlyChanges }) {
   );
 }
 
-export default function Runs() {
+export default function Runs({ onAlerts }) {
   const [history, setHistory] = useState(null);
   const [selected, setSelected] = useState("");
   const [base, setBase] = useState("");
@@ -115,6 +116,13 @@ export default function Runs() {
   }).catch((e) => setError(e.message)), [limit]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Scheduled runs land in the background: poll so they show up without a reload.
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => { load(); setVersion((v) => v + 1); onAlerts?.(); }, 15000);
+    return () => clearInterval(id);
+  }, [load, onAlerts]);
 
   const run = history?.runs.find((r) => r.run_id === selected);
   const baseId = base || run?.base_run_id || "";
@@ -137,6 +145,8 @@ export default function Runs() {
       setBase("");
       await load();
       setSelected(res.run_id);
+      setVersion((v) => v + 1);
+      onAlerts?.();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -159,11 +169,12 @@ export default function Runs() {
         the run before it, or pick another run to compare with.
       </p>
       {error && <p className="error-text" role="alert">{error}</p>}
+      <Ops version={version} onChange={onAlerts} />
       <table className="runs-table">
         <thead>
           <tr>
             <th>Run</th><th>Started</th><th>Status</th><th>Trigger</th><th>Duration</th><th>Datasets</th>
-            <th>Gold rows</th><th>Rows dropped</th><th>Contract fails</th><th>Changes vs previous</th>
+            <th>Gold rows</th><th>Rows dropped</th><th>Contract fails</th><th>Alerts</th><th>Changes vs previous</th>
           </tr>
         </thead>
         <tbody>
@@ -179,6 +190,7 @@ export default function Runs() {
               <td className="num">{r.gold_rows.toLocaleString()}</td>
               <td className="num">{r.rows_dropped}</td>
               <td className={`num ${r.contract_failures ? "down" : ""}`}>{r.contract_failures}</td>
+              <td className={`num ${r.alerts ? "down" : ""}`}>{r.alerts ?? 0}</td>
               <td><ChangeSummary s={r.changes} /></td>
             </tr>
           ))}
