@@ -17,7 +17,8 @@ For each column of the new source decide how it relates to the existing silver/g
 - maps_to: same business meaning as an existing column (e.g. country, email) but not used to join.
 - new: a new attribute with no existing equivalent (target null).
 You get the source profile, heuristic suggestions (name similarity + real value overlap) and the
-catalog of existing columns. Prefer silver datasets and unique keys for joins. Only use targets from the catalog.
+catalog of existing columns. When the source has documented columns ("docs", e.g. from Confluence), treat
+their descriptions and links_to hints as strong evidence. Prefer silver datasets and unique keys for joins. Only use targets from the catalog.
 Reply with ONLY a JSON array: [{"source_column", "relation", "target", "confidence" (0-1), "reason"}],
 one entry per source column, reason in one short sentence."""
 
@@ -53,7 +54,8 @@ async def review(source: dict, suggestion: dict) -> tuple[list[dict], str]:
     llm = get_llm()
     if llm is None:
         return [{**h, "origin": "heuristic"} for h in heuristic], "heuristic"
-    payload = {"source": {k: source[k] for k in ("name", "dataset", "rows", "columns", "sample")},
+    payload = {"source": {k: source[k] for k in ("name", "dataset", "rows", "columns", "sample", "docs")
+                          if k in source},
                "heuristic": [{k: h[k] for k in ("source_column", "relation", "target", "reason", "candidates")}
                              for h in heuristic],
                "catalog": suggestion["targets"]}
