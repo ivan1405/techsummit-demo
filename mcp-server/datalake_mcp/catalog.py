@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import secrets
 import threading
 from collections import deque
 from datetime import datetime, timezone
@@ -37,9 +38,11 @@ DEFAULT_MAX_ROWS = 200
 
 
 READER, ANALYST = "reader", "analyst"
-# Reader masks per PII tag: a hint plus a short stable token (md5 prefix), so equal values stay equal and readers can
-# still count distinct values and join on masked columns. Analysts see raw values.
-_TOKEN = "'***-' || left(md5(CAST({c} AS VARCHAR)), 6)"
+# Reader masks per PII tag: a hint plus a short token, so equal values stay equal and readers can still count distinct
+# values and join on masked columns. The token is keyed with a per-process secret so readers cannot fingerprint values
+# (e.g. hash every possible birth date). Analysts see raw values.
+MASK_KEY = secrets.token_hex(16)
+_TOKEN = "'***-' || left(md5('" + MASK_KEY + "' || CAST({c} AS VARCHAR)), 6)"
 MASKS = {
     "email": "CASE WHEN {c} IS NULL THEN NULL WHEN contains(CAST({c} AS VARCHAR), '@') THEN "
              "left(CAST({c} AS VARCHAR), 1) || " + _TOKEN + " || regexp_extract(CAST({c} AS VARCHAR), '@[^@]*$') "

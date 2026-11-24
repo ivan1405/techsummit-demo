@@ -2,7 +2,7 @@ import hashlib
 import pyarrow as pa
 import pytest
 
-from datalake_mcp.catalog import Catalog, QueryError
+from datalake_mcp.catalog import MASK_KEY, Catalog, QueryError
 
 RUN = "run-1"
 
@@ -319,7 +319,7 @@ def pii_catalog():
 
 def test_reader_role_masks_pii_in_sql_samples_and_dictionary(pii_catalog):
     sql = "SELECT * FROM customer_360 ORDER BY customer_id"
-    tok = lambda v: "***-" + hashlib.md5(v.encode()).hexdigest()[:6]  # noqa: E731
+    tok = lambda v: "***-" + hashlib.md5((MASK_KEY + v).encode()).hexdigest()[:6]  # noqa: E731
     assert pii_catalog.query(sql)["rows"] == [["C1", "A" + tok("Ana Diaz"), "a" + tok("ana@x.com") + "@x.com",
                                                tok("+34 600")], ["C2", None, None, None]]
     assert pii_catalog.query(sql, role="analyst")["rows"][0] == ["C1", "Ana Diaz", "ana@x.com", "+34 600"]
