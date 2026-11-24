@@ -9,6 +9,7 @@ const SUGGESTIONS = [
   "What are customers complaining about?",
   "Where does customer revenue come from?",
   "What data quality issues were found?",
+  "What changed since the last run?",
 ];
 
 export default function Chat() {

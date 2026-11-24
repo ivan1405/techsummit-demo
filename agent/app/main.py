@@ -309,6 +309,21 @@ async def remove_source(name: str):
     return await _pipeline("DELETE", f"/sources/{name}")
 
 
+@app.get("/api/runs")
+async def runs(limit: int = 20):
+    return await _tool("get_run_history", limit=limit)
+
+
+@app.get("/api/runs/diff")
+async def run_diff(run_id: str = "", base: str = ""):
+    return await _tool("compare_runs", run_id=run_id, base_run_id=base)
+
+
+@app.post("/api/runs")
+async def trigger_run():
+    return await _pipeline("POST", "/run")
+
+
 @app.get("/api/contracts")
 async def contracts():
     return await _tool("get_contracts")

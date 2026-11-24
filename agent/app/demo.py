@@ -14,6 +14,7 @@ HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fi
 - *Where does customer revenue come from?* (column lineage)
 - *Show the pipeline lineage*
 - *What data quality issues were found?*
+- *What changed since the last run?*
 - *What tables are available?*
 
 Set `LLM_PROVIDER` and an API key in `.env` to ask anything."""
@@ -35,6 +36,7 @@ QUERIES = {
 }
 
 KEYWORDS = [
+    (("changed", "last run", "previous run", "run history", "diff"), "changes"),
     (("come from", "origin", "calculated", "column lineage"), "column_lineage"),
     (("lineage", "pipeline", "flow"), "lineage"),
     (("quality", "dropped", "invalid", "clean"), "quality"),
@@ -89,6 +91,30 @@ async def answer(question: str) -> str:
         rows = [[r["job_name"], r["rule"], r["rows_affected"]] for r in res["rules"]]
         return (f"**Data quality, run `{res['run_id'][:8]}`: {res['total_rows_dropped']} rows dropped**\n\n"
                 + md_table(["job", "rule", "rows dropped"], rows) + "\n\nSources: `data_quality`")
+
+    if intent == "changes":
+        res = await call("compare_runs")
+        if "error" in res:
+            return f"Error: {res['error']}"
+        s = res["summary"]
+        rows = [[d["dataset"], d["status"], d["rows_base"], d["rows"], d["rows_delta"],
+                 ", ".join([f"+{c}" for c in d["columns_added"]] + [f"-{c}" for c in d["columns_removed"]]
+                           + [f'{t["column"]}: {t["from"]}→{t["to"]}' for t in d["type_changes"]])]
+                for d in res["datasets"] if d["status"] != "unchanged"]
+        out = (f"**Run `{res['run']['run_id'][:8]}` vs `{res['base']['run_id'][:8]}`:** "
+               f"{s['datasets_added']} dataset(s) added, {s['datasets_removed']} removed, "
+               f"{s['row_changes']} row-count change(s), {s['schema_changes']} schema change(s), "
+               f"{s['quality_changes']} data-quality and {s['contract_changes']} contract change(s).\n\n")
+        out += md_table(["dataset", "status", "rows before", "rows after", "Δ", "schema"], rows) if rows else \
+            "No dataset changed.\n"
+        if res["quality"]:
+            out += "\n\n" + md_table(["job", "rule", "dropped before", "dropped now"],
+                                      [[q["job_name"], q["rule"], q["base"], q["current"]] for q in res["quality"]])
+        if res["contracts"]:
+            out += "\n\n" + md_table(["dataset", "check", "before", "now"],
+                                      [[c["dataset"], c["check"], c["base"], c["current"]] for c in res["contracts"]])
+        return out + "\n\nOpen the **Run history** tab to compare any two runs.\n\nSources: `lineage_outputs`, " \
+            "`data_dictionary`, `data_quality`, `contract_checks`"
 
     if intent == "tables":
         res = await call("list_tables")
