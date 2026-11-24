@@ -88,6 +88,8 @@ export default function Chat() {
         }}
       >
         <input
+          name="message"
+          aria-label="Message"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about sales, customers, products, lineage…"
