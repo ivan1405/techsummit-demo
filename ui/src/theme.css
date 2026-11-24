@@ -1,0 +1,94 @@
+/* Parser AI design tokens, copied from parser-ai/LibreChat client/src/style.css (--hub-*). */
+@font-face { font-display: swap; font-family: "DM Sans"; font-weight: 300 800; src: url("/fonts/DMSans-Variable.woff2") format("woff2"); }
+@font-face { font-display: swap; font-family: Inter; font-weight: 400; src: url("/fonts/Inter-Regular.woff2") format("woff2"); size-adjust: 94%; }
+@font-face { font-display: swap; font-family: Inter; font-weight: 500; src: url("/fonts/Inter-SemiBold.woff2") format("woff2"); size-adjust: 94%; }
+@font-face { font-display: swap; font-family: Inter; font-weight: 600 700; src: url("/fonts/Inter-Bold.woff2") format("woff2"); size-adjust: 94%; }
+@font-face { font-display: swap; font-family: "Roboto Mono"; font-weight: 400; src: url("/fonts/roboto-mono-latin-400-normal.woff2") format("woff2"); }
+
+:root {
+  --font-sans: Roboto, Inter, sans-serif;
+  --font-title: "DM Sans", sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+
+  --hub-canvas: #ffffff;
+  --hub-surface: #ffffff;
+  --hub-field: #f7f9fb;
+  --hub-side-card: #f5f8fa;
+  --hub-alt: #eff4f8;
+  --hub-card: #dce4e9;
+  --hub-line: #dce4e9;
+  --hub-line-soft: #e3ebf1;
+  --hub-node-border: #cfdae3;
+  --hub-heading: #012542;
+  --hub-body: #012542;
+  --hub-copy: #333333;
+  --hub-muted: #4b657b;
+  --hub-meta: #5d6271;
+  --hub-on-tile: #ffffff;
+  --hub-steel-700: #516c83;
+  --hub-steel-500: #8092a0;
+  --hub-steel-300: #a3bbce;
+  --hub-red: #e44144;
+  --hub-red-deep: #c93639;
+  --hub-red-strong: #b3262a;
+  --hub-red-strong-hover: #961e22;
+  --hub-red-10: rgba(228, 65, 68, 0.1);
+  --hub-red-20: rgba(228, 65, 68, 0.2);
+  --hub-pill-bg: #eff4f8;
+  --hub-pill-fg: #4b657b;
+  --hub-success-text: #1f6b4a;
+  --hub-success-fill: #eef8f2;
+  --hub-success-border: #9fd0b6;
+  --hub-warning-text: #7a4b00;
+  --hub-warning-fill: #fff6e3;
+  --hub-warning-border: #e8c77f;
+  --hub-danger-text: #a82a2d;
+  --hub-danger-fill: #fdf1f1;
+  --hub-danger-border: #e9b8b9;
+  --hub-analytics-header: #262d42;
+  --hub-analytics-on-header: #ffffff;
+  --hub-analytics-header-muted: #bfccd8;
+  --hub-analytics-header-line: #46516a;
+  --hub-analytics-control: #1e263a;
+}
+
+.dark {
+  --hub-canvas: #012542;
+  --hub-surface: #193b55;
+  --hub-field: #16354e;
+  --hub-side-card: #15364f;
+  --hub-alt: #123049;
+  --hub-card: #123049;
+  --hub-line: #2a4358;
+  --hub-line-soft: #1c374e;
+  --hub-node-border: #47637b;
+  --hub-heading: #ffffff;
+  --hub-body: #b3bec6;
+  --hub-copy: #e0e7ed;
+  --hub-muted: #a3bbce;
+  --hub-meta: #b3becb;
+  --hub-on-tile: #012542;
+  --hub-steel-700: #b3c9db;
+  --hub-steel-500: #809db4;
+  --hub-steel-300: #55778f;
+  --hub-red: #f56a6c;
+  --hub-red-deep: #ff999b;
+  --hub-red-strong: #f56a6c;
+  --hub-red-strong-hover: rgba(245, 106, 108, 0.9);
+  --hub-red-10: rgba(245, 106, 108, 0.1);
+  --hub-red-20: rgba(245, 106, 108, 0.2);
+  --hub-pill-bg: #123049;
+  --hub-pill-fg: #a3bbce;
+  --hub-success-text: #9ce1bb;
+  --hub-success-fill: #153f37;
+  --hub-success-border: #3e8567;
+  --hub-warning-text: #ffd18a;
+  --hub-warning-fill: #47381f;
+  --hub-warning-border: #aa8746;
+  --hub-danger-text: #ffb0b3;
+  --hub-danger-fill: #492d3b;
+  --hub-danger-border: #a2606e;
+  --hub-analytics-header: #111e30;
+  --hub-analytics-header-line: #465b72;
+  --hub-analytics-control: #0c1626;
+}

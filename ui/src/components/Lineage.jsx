@@ -49,6 +49,11 @@ export default function Lineage() {
     return new Set(trace.steps.flatMap((s) => [s.source_dataset, s.target_dataset]));
   }, [trace]);
 
+  const select = (id) => {
+    setSelected(id);
+    setTrace(null);
+  };
+
   if (error) return <p className="error-text">{error}</p>;
   if (!graph) return <p className="muted">Loading…</p>;
 
@@ -73,7 +78,7 @@ export default function Lineage() {
         <svg width={view.width} height={view.height}>
           <defs>
             <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+              <path d="M0,0 L10,5 L0,10 z" className="arrow" />
             </marker>
           </defs>
           {graph.edges.map((e, i) => {
@@ -97,14 +102,17 @@ export default function Lineage() {
                 key={n.id}
                 transform={`translate(${p.x},${p.y})`}
                 className={`node ${n.layer} ${selected === n.id ? "selected" : ""} ${highlighted.has(n.id) ? "traced" : ""}`}
-                onClick={() => {
-                  setSelected(n.id);
-                  setTrace(null);
-                }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={selected === n.id}
+                aria-label={`${n.layer} ${n.name}`}
+                onClick={() => select(n.id)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), select(n.id))}
               >
                 <rect width={NODE_W} height={NODE_H} rx="8" />
-                <text x="10" y="18" className="layer">{n.layer}</text>
-                <text x="10" y="35" className="name">{n.name}</text>
+                <rect className="bar" x="0" y="8" width="3" height={NODE_H - 16} rx="1.5" />
+                <text x="12" y="18" className="layer">{n.layer}</text>
+                <text x="12" y="35" className="name">{n.name}</text>
                 {n.rows != null && <text x={NODE_W - 10} y="18" textAnchor="end" className="rows">{n.rows} rows</text>}
               </g>
             );
