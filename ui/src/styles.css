@@ -159,6 +159,28 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .edge.status-removed { stroke: var(--hub-danger-border); stroke-width: 2; stroke-dasharray: 6 4; }
 .edge.status-unchanged { opacity: .8; }
 
+.add-source { border: 1px solid var(--hub-line); border-radius: 12px; padding: 16px; margin: 12px 0 20px; background: var(--hub-side-card); font-size: 13px; color: var(--hub-copy); }
+.wizard-head { all: unset; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.wizard-head h3 { margin: 0; font-size: 18px; }
+.link-button { margin-left: auto; background: none; border: none; color: var(--hub-red-strong); text-decoration: underline; }
+.wizard-step { border-top: 1px solid var(--hub-line); margin-top: 14px; padding-top: 10px; }
+.wizard-step h4 { margin: 4px 0 10px; display: flex; gap: 8px; align-items: center; }
+.fields { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; }
+.add-source label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--hub-muted); }
+.add-source label.wide { flex: 1; min-width: 320px; }
+.add-source label.block { margin: 10px 0; }
+.add-source input:not([type="file"]):not([type="checkbox"]), .add-source select, .add-source textarea { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--hub-line); background: var(--hub-field); color: var(--hub-copy); font: inherit; font-size: 13px; }
+.add-source textarea { font-family: var(--font-mono); font-size: 12px; resize: vertical; }
+.add-source input:focus, .add-source select:focus, .add-source textarea:focus { outline: none; border-color: var(--hub-steel-300); }
+.add-source input:disabled { opacity: .5; }
+.add-source .primary:disabled { opacity: .6; cursor: default; }
+.links input { width: 260px; }
+.badge-inline { font-size: 11px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--hub-pill-bg); color: var(--hub-pill-fg); border: 1px solid var(--hub-line); font-family: var(--font-sans); }
+.origin { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; padding: 0 6px; border-radius: 4px; border: 1px solid var(--hub-line); color: var(--hub-muted); }
+.origin.ai { border-color: var(--hub-red); color: var(--hub-red-strong); }
+.origin.edited { border-color: var(--hub-steel-300); color: var(--hub-steel-700); }
+.source-graph { border: 1px solid var(--hub-line); border-radius: 8px; margin: 10px 0; overflow-x: auto; }
+
 @media (max-width: 1100px) {
   .impact { grid-template-columns: 300px 1fr; }
   .impact .details { grid-column: 1 / -1; border-left: none; border-top: 1px solid var(--hub-line); }
