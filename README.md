@@ -81,7 +81,8 @@ Set these in `.env`:
 | Variable | Values |
 |---|---|
 | `LLM_PROVIDER` | `none` (default), `openai`, `anthropic` |
-| `LLM_MODEL` | e.g. `gpt-4o-mini`, `claude-sonnet-4-5` |
+| `LLM_MODEL` | e.g. `gpt-4o-mini`, `claude-sonnet-4-5`, `claude-sonnet-5-5` |
+| `LLM_TEMPERATURE` | Optional. Empty uses the model default; `claude-sonnet-5-5` and `gpt-5` models only accept the default |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Your key |
 
 With `LLM_PROVIDER=none` everything still runs: review enrichment uses keyword rules (rows are tagged `method=heuristic`), and the chatbot answers a fixed set of questions (revenue, products, customers, complaints, lineage, data quality) through the same MCP tools.
