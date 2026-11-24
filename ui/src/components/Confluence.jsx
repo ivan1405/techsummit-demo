@@ -16,7 +16,9 @@ export default function ConfluencePicker({ value, schema, onChange, optional = f
     setBusy(true);
     setError(null);
     try {
-      setResults((await api.confluenceSearch(query, label)).results);
+      const found = (await api.confluenceSearch(query, label)).results;
+      setResults(found);
+      if (!optional && !value && found.length === 1) pick(found[0]);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -61,7 +63,7 @@ export default function ConfluencePicker({ value, schema, onChange, optional = f
           {results.length === 0 && <p className="muted">No pages found.</p>}
           {results.map((p) => (
             <button type="button" role="listitem" key={p.id} className={p.id === value ? "active" : ""} aria-pressed={p.id === value} onClick={() => pick(p)}>
-              <strong>{p.title}</strong>
+              <strong>{p.id === value && "✓ "}{p.title}</strong>
               <span className="cols">{p.space} · {p.labels.join(", ") || "no labels"}</span>
             </button>
           ))}
