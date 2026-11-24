@@ -70,10 +70,10 @@ export default function App() {
             {health?.status === "ok" ? (health.model ? `LLM: ${health.model}` : "Demo mode (no LLM)") : "Agent offline"}
           </span>
           <label className="role-select" title="Data role for chat and dictionary: readers see personal data masked">
-            <span className={`badge ${role === "analyst" ? "pii-on" : ""}`}>{role === "analyst" ? "PII visible" : "PII masked"}</span>
-            <select aria-label="Data role" value={role} onChange={(e) => setRole(e.target.value)}>
+            <select aria-label="Data role" className={role === "analyst" ? "pii-on" : ""} value={role}
+                    onChange={(e) => setRole(e.target.value)}>
               {(health?.roles || ["reader"]).map((r) => (
-                <option key={r} value={r}>{r === "analyst" ? "Analyst" : "Reader"}</option>
+                <option key={r} value={r}>{r === "analyst" ? "Analyst · PII visible" : "Reader · PII masked"}</option>
               ))}
             </select>
           </label>
