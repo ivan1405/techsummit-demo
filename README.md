@@ -82,6 +82,10 @@ Example request body:
 
 Each gold dataset has a contract in `pipeline/src/pipeline/contracts.py`: owner, row-count range, required columns and types, not-null columns, a unique key and a `max_age_minutes`. Every run writes the results to `lineage.contract_checks`; the MCP tool `get_contracts` adds freshness (`fresh` ≤ max age, `stale` ≤ 2×, `expired` beyond) and a status: green, amber (stale) or red (failed check or expired). Badges appear in the **Data dictionary**; details are in **Data quality**. Onboarded datasets get a default contract (accepted schema, ≥ 1 row, 24 h).
 
+### Run history and run-to-run diff
+
+The **Run history** tab lists every pipeline run (status, duration, datasets written, gold rows, rows dropped, contract failures) with a summary of what changed vs the run before. Select a run to see, per dataset, rows before/after with the delta and %, columns added/removed and type changes, plus data-quality rules and contract checks whose result changed. Compare with any other run from the dropdown, or start a new run with **Run pipeline now**. Built from `lineage_outputs`, `data_dictionary`, `data_quality` and `contract_checks`; MCP tools `get_run_history` and `compare_runs` let the chat answer "what changed since the last run?".
+
 ### Onboarding a new data source
 
 In the **Data dictionary** tab, **+ Add data source** walks through:
