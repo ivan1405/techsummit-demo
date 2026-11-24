@@ -195,7 +195,7 @@ export default function Impact() {
                   <text x="12" y="18" className="layer">{n.layer}</text>
                   <text x="12" y="35" className="name">{n.name}</text>
                   {n.status !== "unchanged" && <text x={NODE_W - 10} y="18" textAnchor="end" className="rows">{n.status}</text>}
-                  {count > 0 && <text x={NODE_W - 10} y="35" textAnchor="end" className="rows">{count} cols</text>}
+                  {count > 0 && <text x={NODE_W - 10} y="35" textAnchor="end" className="rows">{count} col{count > 1 ? "s" : ""}</text>}
                 </g>
               );
             })}

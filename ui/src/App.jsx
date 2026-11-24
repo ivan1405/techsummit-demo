@@ -24,6 +24,12 @@ export default function App() {
   };
 
   useEffect(() => {
+    const onHash = () => location.hash.slice(1) in TABS && setTabState(location.hash.slice(1));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth({ status: "down" }));
   }, []);
 
