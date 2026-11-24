@@ -277,8 +277,11 @@ class Catalog:
         if "lineage_outputs" in self.tables:
             for r in self._rows(f"SELECT run_id, dataset, rows FROM lineage_outputs WHERE run_id IN ({marks})", run_ids):
                 snap[r["run_id"]]["rows"][r["dataset"]] = r["rows"]
-        else:
-            for r in self._rows(f"SELECT run_id, outputs, rows_out FROM lineage_jobs WHERE run_id IN ({marks})", run_ids):
+        older = [r for r in run_ids if not snap[r]["rows"]]  # runs recorded before lineage_outputs existed
+        if older and "lineage_jobs" in self.tables:
+            marks_old = ", ".join("?" * len(older))
+            for r in self._rows(f"SELECT run_id, outputs, rows_out FROM lineage_jobs WHERE run_id IN ({marks_old})",
+                                older):
                 outs = [o for o in r["outputs"].split(", ") if o]
                 for o in outs:
                     snap[r["run_id"]]["rows"][o] = r["rows_out"] if len(outs) == 1 else None
