@@ -198,7 +198,7 @@ export default function AddSource({ onClose }) {
                     </td>
                     <td className="num">{l.origin === "edited" ? "—" : `${Math.round(l.confidence * 100)}%`}</td>
                     <td>
-                      <span className={`origin ${l.origin}`}>{l.origin === "ai" ? "AI" : l.origin}</span> <span className="muted">{l.reason}</span>
+                      <span className={`origin ${l.origin}`}>{l.origin === "ai" ? "AI" : l.origin}</span> <span className="muted">{l.origin === "edited" ? "Changed by you; validate to check it against the data." : l.reason}</span>
                     </td>
                   </tr>
                 ))}

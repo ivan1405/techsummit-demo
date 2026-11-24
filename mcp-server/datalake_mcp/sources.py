@@ -300,7 +300,7 @@ def validate(source: dict, links: list[dict], targets: dict[str, dict], values_o
             if ov < 0.5:
                 check.update(status="fail", message=f"Only {ov:.0%} of values match {ref}; this is not a valid join.")
             elif orphans:
-                check.update(status="warn", message=f"{len(orphans)} values have no match in {ref}, "
+                check.update(status="warn", message=f"{len(orphans)} value{'s have' if len(orphans) > 1 else ' has'} no match in {ref}, "
                                                     f"e.g. {', '.join(orphans[:3])}.")
             else:
                 check["message"] = f"All {len(src_vals)} values match {ref}."
