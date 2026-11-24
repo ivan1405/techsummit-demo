@@ -86,6 +86,12 @@ Each gold dataset has a contract in `pipeline/src/pipeline/contracts.py`: owner,
 
 Every column in the **Data dictionary** has a **?** button, and a traced column in **Lineage** has **Ask about this column**. Both open the chat with "How is `<dataset>.<column>` calculated and where does it come from?". The answer comes from the MCP tool `explain_column`: the description and profile, each upstream hop with its transformation, downstream uses, the data quality rules of the job that builds the column, and the dataset's contract status. Demo mode answers any question that contains a `layer.dataset.column` reference.
 
+### Personal data (PII) tags and masking
+
+The pipeline tags personal data in `data_dictionary`. Columns are tagged by name (`pii`: email, name, phone, address or birth_date), and the tag is carried downstream through column lineage. For example, `gold.sales.customer_name` inherits `name` from `silver.customers.full_name`; `pii_origin` points at the original column. Aggregates such as counts are not tagged. The dictionary shows a **PII** chip and has a "Personal data only" filter.
+
+The MCP server masks tagged columns for the **reader** role: SQL results, `describe_table` samples and dictionary sample values. Emails become `c***@example.com`, names become `C***`, and anything else becomes `***`. The masking is applied to an in-memory copy of the tables, so a reader can still count or join on these columns but never sees the values. The **analyst** role sees raw values, but only when the caller sends `X-Data-Role: analyst` together with the shared `MCP_ANALYST_TOKEN`, which the agent holds. The Reader/Analyst switch in the UI header sets the role for chat and the dictionary; in a real deployment this switch would be replaced by SSO groups.
+
 ### Run history and run-to-run diff
 
 The **Run history** tab lists every pipeline run (status, duration, datasets written, gold rows, rows dropped, contract failures) with a summary of what changed vs the run before. Select a run to see, per dataset, rows before/after with the delta and %, columns added/removed and type changes, plus data-quality rules and contract checks whose result changed. Compare with any other run from the dropdown, or start a new run with **Run pipeline now**. Built from `lineage_outputs`, `data_dictionary`, `data_quality` and `contract_checks`; MCP tools `get_run_history` and `compare_runs` let the chat answer "what changed since the last run?".
