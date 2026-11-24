@@ -48,3 +48,8 @@ def test_column_question_uses_explain_column(monkeypatch):
     assert calls == [("explain_column", {"dataset": "gold.customer_360", "column": "revenue"})]
     assert "Revenue in EUR." in out and "| gold.customer_360.revenue | gold.sales.amount | SUM |" in out
     assert "**Contract**: green (owner CRM" in out
+
+
+def test_md_table_escapes_pipes_and_raw_file_refs_are_not_columns():
+    assert demo.md_table(["rule"], [["%Y-%m-%d | %d/%m/%Y"]]).endswith("| %Y-%m-%d \\| %d/%m/%Y |")
+    assert demo.COLUMN_REF.search("where is source.orders.csv.quantity used?") is None

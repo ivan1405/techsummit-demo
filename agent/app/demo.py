@@ -7,7 +7,7 @@ import re
 
 from .mcp_tools import call
 
-COLUMN_REF = re.compile(r"\b((?:source|bronze|silver|gold)\.[a-z0-9_]+)\.([a-z0-9_]+)\b", re.I)
+COLUMN_REF = re.compile(r"\b((?:bronze|silver|gold)\.[a-z0-9_]+)\.([a-z0-9_]+)\b", re.I)
 
 HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fixed set of questions:
 
@@ -55,7 +55,7 @@ KEYWORDS = [
 
 def md_table(columns: list[str], rows: list[list]) -> str:
     def fmt(v):
-        return "" if v is None else f"{v:,.2f}" if isinstance(v, float) else str(v)
+        return "" if v is None else f"{v:,.2f}" if isinstance(v, float) else str(v).replace("|", "\\|")
 
     lines = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
     lines += ["| " + " | ".join(fmt(v) for v in row) + " |" for row in rows]
