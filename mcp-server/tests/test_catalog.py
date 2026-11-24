@@ -165,6 +165,16 @@ def test_impact_add_dataset_and_column_adds_nodes_and_edges(dict_catalog):
     assert rep["summary"]["added"] == 1 and rep["summary"]["renamed"] == 1
 
 
+def test_impact_new_source_is_added_without_warning(dict_catalog):
+    rep = dict_catalog.impact_analysis([
+        {"type": "add_dataset", "dataset": "bronze.returns", "inputs": ["source.returns.csv"]},
+        {"type": "add_dataset", "dataset": "gold.returns", "inputs": ["silver.nope"]},
+    ])
+    nodes = {n["id"]: n["status"] for n in rep["nodes"]}
+    assert nodes["source.returns.csv"] == "added" and nodes["bronze.returns"] == "added"
+    assert rep["warnings"] == ["gold.returns reads from unknown dataset silver.nope."]
+
+
 def test_impact_rejects_unknown_columns(dict_catalog):
     with pytest.raises(QueryError, match="Unknown column"):
         dict_catalog.impact_analysis([{"type": "remove_column", "dataset": "gold.sales", "column": "nope"}])

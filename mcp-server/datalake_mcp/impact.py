@@ -56,7 +56,8 @@ def analyze(columns: dict[str, list[str]], deps: dict[Col, list[Col]], edges: li
 
     def link(src: str, dst: str) -> None:
         if src not in datasets:
-            warnings.append(f"{dst} reads from unknown dataset {src}.")
+            if not src.startswith("source."):
+                warnings.append(f"{dst} reads from unknown dataset {src}.")
             datasets[src] = "added"
         edge_status.setdefault((src, dst), "added")
 
