@@ -43,6 +43,7 @@ export default function Chat() {
       <div className="messages">
         {messages.length === 0 && (
           <div className="empty">
+            <img className="mark" src="/assets/parser-mark.svg" alt="" />
             <h2>Ask your data lake</h2>
             <p>Answers come from the gold layer, with full lineage back to the raw sources.</p>
             <div className="suggestions">
@@ -93,7 +94,6 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about sales, customers, products, lineage…"
-          aria-label="Message"
         />
         <button type="submit" disabled={loading || !input.trim()}>
           Send
