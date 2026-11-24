@@ -7,6 +7,31 @@ cp .env.example .env   # optional: add an LLM key
 docker compose up --build
 ```
 
+### Presenting: `make demo`
+
+```bash
+make demo
+```
+
+`make demo` gives a clean, repeatable demo:
+
+- **Reset:** wipes the lake, saved sources, connections, schedule and alerts (`docker compose down -v`).
+- **Start:** starts the stack with the demo Postgres (`--profile sources`) and waits until every service is healthy.
+- **Seed:** saves the Postgres as connection `erp`.
+- **Check:** smoke-tests every feature the tour shows, through the UI's `/api` proxy.
+- **Tour:** prints the guided tour and opens http://localhost:3000/?tour=1. The in-app tour (also under **Tour** in the header) walks through chat, lineage, the dictionary and PII, onboarding a source, impact analysis, quality and contracts, and schedules and late-source alerts.
+
+No LLM key is needed. Other targets:
+
+| Target | What it does |
+|---|---|
+| `make up` | Start the stack, keeping the lake |
+| `make check` | Smoke-test the running stack |
+| `make down` | Stop the stack |
+| `make reset` | Stop the stack and wipe the lake |
+
+`scripts/demo.py` uses only the Python standard library.
+
 | URL | What |
 |---|---|
 | http://localhost:3000 | Chat UI, lineage graph, data quality report |

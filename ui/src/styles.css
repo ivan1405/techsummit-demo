@@ -274,3 +274,13 @@ tr:hover .ask, .ask:focus-visible { opacity: 1; }
 .alert-badge { cursor: pointer; font: inherit; font-size: 12px; }
 .small { font-size: 11px; }
 @media (max-width: 1100px) { .ops { grid-template-columns: 1fr; } }
+
+/* Guided tour (make demo) */
+.tour { position: fixed; right: 20px; bottom: 20px; z-index: 50; width: min(380px, calc(100vw - 40px)); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--hub-line); border-top: 3px solid var(--hub-red); background: var(--hub-surface); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); }
+.tour-head { display: flex; align-items: center; font-size: 12px; }
+.tour h3 { margin: 6px 0; font-size: 16px; }
+.tour p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--hub-body); }
+.tour-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.ghost { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--hub-line); background: var(--hub-surface); color: var(--hub-body); }
+.ghost:hover:not(:disabled) { background: var(--hub-field); }
+.ghost:disabled { opacity: 0.5; cursor: default; }
