@@ -40,6 +40,8 @@ def matches(page: dict, cql: str) -> bool:
             return False
         if field == "label" and value not in [x.lower() for x in page["labels"]]:
             return False
+        if field == "title" and op == "=" and page["title"].lower() != value:
+            return False
     terms = [v.replace('\\"', '"').lower() for f, v in re.findall(r'(title|text)\s*~\s*"((?:[^"\\]|\\.)*)"', cql)]
     return not terms or any(all(w in _text(page) for w in t.split()) for t in terms)
 

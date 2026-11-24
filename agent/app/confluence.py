@@ -168,7 +168,13 @@ async def page(page_id: str) -> dict:
 
 
 async def publish(title: str, storage: str, space: str = "") -> dict:
+    """Create the page; a page with the same title (same plan id) is returned instead of duplicated."""
+    space = space or CONFLUENCE_SPACE
+    found = await _request("GET", "/content/search", params={"cql": f"type = page AND space = {_quote(space)} AND title = {_quote(title)}",
+                                                             "expand": "space,metadata.labels"})
+    if found.get("results"):
+        return {**_summary(found["results"][0], (found.get("_links") or {}).get("base", "")), "existing": True}
     res = await _request("POST", "/content", json={"type": "page", "title": title,
-                                                   "space": {"key": space or CONFLUENCE_SPACE},
+                                                   "space": {"key": space},
                                                    "body": {"storage": {"value": storage, "representation": "storage"}}})
     return _summary(res)
