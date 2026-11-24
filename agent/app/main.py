@@ -132,9 +132,9 @@ class LinksRequest(BaseModel):
     feed: str = ""
 
 
-async def _checked(name: str, **args):
+async def _checked(tool: str, /, **args):
     try:
-        res = await mcp_tools.call(name, **args)
+        res = await mcp_tools.call(tool, **args)
     except Exception as exc:
         raise HTTPException(502, f"MCP error: {exc}") from exc
     if isinstance(res, dict) and "error" in res:

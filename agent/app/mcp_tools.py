@@ -47,7 +47,7 @@ def parse_result(result) -> dict | list | str:
         return result
 
 
-async def call(name: str, **args) -> dict | list | str:
+async def call(name: str, /, **args) -> dict | list | str:
     """Call an MCP tool directly; recorded in `calls` when a recorder list is set."""
     tools = await get_tools()
     result = parse_result(await tools[name].ainvoke(args))
