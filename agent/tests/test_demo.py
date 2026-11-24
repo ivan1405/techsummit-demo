@@ -67,3 +67,25 @@ def test_alerts_question_uses_get_alerts(monkeypatch):
     monkeypatch.setattr(demo, "call", fake_call)
     text = asyncio.run(demo.answer("Is any data late?"))
     assert calls == ["get_alerts"] and "1 active alert" in text and "bronze.orders" in text
+
+
+def test_insights_draw_charts(monkeypatch):
+    from app import mcp_tools
+
+    async def fake_call(name, sql, **kwargs):
+        if "country" in sql:
+            return {"columns": ["country", "orders", "revenue"], "rows": [["ES", 3, 300.0], ["FR", 1, 100.0]]}
+        if "order_date" in sql:
+            return {"columns": ["day", "revenue"], "rows": [["2026-07-01", 50.0], ["2026-07-02", 80.0]]}
+        return {"columns": ["topic", "negative_reviews", "avg_rating"], "rows": [["delivery", 4, 1.5]]}
+
+    monkeypatch.setattr(demo, "call", fake_call)
+    recorded = []
+    token = mcp_tools.calls.set(recorded)
+    try:
+        out = asyncio.run(demo.answer("Generate image insights"))
+    finally:
+        mcp_tools.calls.reset(token)
+    charts = [r for r in recorded if r[0] == "render_chart"]
+    assert [c[2]["chart"]["kind"] for c in charts] == ["pie", "line", "bar"]
+    assert charts[0][2]["chart"]["labels"] == ["ES", "FR"] and "75%" in out and "delivery" in out

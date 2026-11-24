@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
-from . import confluence, linker, mcp_tools, plan
+from . import charts, confluence, linker, mcp_tools, plan
 from .config import CORS_ORIGINS, LLM_DEADLINE_S, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
 from .graph import build_graph
 
@@ -39,7 +39,8 @@ async def get_graph():
     global _graph
     if _graph is None:
         tools = await mcp_tools.get_tools()
-        _graph = build_graph([t for name, t in tools.items() if name not in mcp_tools.ONBOARDING_TOOLS])
+        _graph = build_graph([t for name, t in tools.items() if name not in mcp_tools.ONBOARDING_TOOLS]
+                             + [charts.render_chart])
     return _graph
 
 
@@ -98,7 +99,7 @@ async def chat(req: ChatRequest):
     reply = new[-1].content if new else ""
     if isinstance(reply, list):
         reply = "".join(b.get("text", "") for b in reply if isinstance(b, dict))
-    return {"reply": note + reply, "steps": steps, "mode": mode}
+    return {"reply": note + reply, "steps": steps, "charts": charts.from_messages(new), "mode": mode}
 
 
 def _failure(exc: Exception) -> str:
