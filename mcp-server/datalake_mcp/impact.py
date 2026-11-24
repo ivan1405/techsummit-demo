@@ -81,6 +81,8 @@ def analyze(columns: dict[str, list[str]], deps: dict[Col, list[Col]], edges: li
         elif kind == "add_column":
             dataset, column = require(change, "dataset", "column")
             if (dataset, column) in cols and cols[(dataset, column)] != "removed":
+                if change.get("if_missing"):
+                    continue
                 raise ChangeError(f"{dataset}.{column} already exists.")
             if dataset not in datasets or datasets[dataset] == "removed":
                 add_dataset(dataset, [])
