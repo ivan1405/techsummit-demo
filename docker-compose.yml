@@ -10,7 +10,11 @@ x-llm-env: &llm-env
 services:
   seaweedfs:
     image: chrislusf/seaweedfs:4.55
-    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    # Small volumes and a fixed volume count: with the 30 GB default size and 8-volume cap, every bucket
+    # (= collection) needs its own volumes and writes fail once a small Docker disk runs out of slots.
+    command: >-
+      server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+      -master.volumeSizeLimitMB=128 -volume.max=100
     ports:
       - "8333:8333"
     volumes:
