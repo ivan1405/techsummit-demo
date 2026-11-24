@@ -418,6 +418,8 @@ class Catalog:
         shown = runs[:max(1, limit)]
         ids = [r["run_id"] for r in runs[:len(shown) + 1]]
         snap = self._snapshots(ids)
+        alerts = dict(self.con.execute("SELECT run_id, count(*) FROM alerts GROUP BY run_id").fetchall()) \
+            if "alerts" in self.tables else {}
         out = []
         for i, r in enumerate(shown):
             cur = snap[r["run_id"]]
@@ -430,10 +432,23 @@ class Catalog:
                 "gold_rows": sum(n or 0 for d, n in cur["rows"].items() if d.startswith("gold.")),
                 "rows_dropped": sum(cur["quality"].values()),
                 "contract_failures": sum(st == "fail" for st in cur["contracts"].values()),
+                "alerts": alerts.get(r["run_id"], 0),
                 "base_run_id": ids[i + 1] if prev else None,
                 "changes": _diff(prev, cur)["summary"] if prev else None,
             })
         return {"total_runs": len(runs), "runs": out}
+
+    def alerts(self, limit: int = 20) -> dict:
+        """Alerts raised by the latest run (active), the most recent alerts across runs, and source deliveries."""
+        run_id = self._latest_run_id()
+        if "alerts" not in self.tables:
+            raise QueryError("No alerts recorded yet. Re-run the pipeline.")
+        cols = "run_id, raised_at, severity, kind, dataset, message"
+        active = self._rows(f"SELECT {cols} FROM alerts WHERE run_id = ? ORDER BY severity, dataset", [run_id])
+        recent = self._rows(f"SELECT {cols} FROM alerts ORDER BY raised_at DESC LIMIT ?", [max(1, limit)])
+        sources = self._rows("SELECT source, last_arrival, age_minutes, max_age_minutes, status FROM source_freshness "
+                             "WHERE run_id = ? ORDER BY source", [run_id]) if "source_freshness" in self.tables else []
+        return {"run_id": run_id, "active": active, "recent": recent, "sources": sources}
 
     def run_diff(self, run_id: str | None = None, base_run_id: str | None = None) -> dict:
         """Compare a run (default: latest) with a base run (default: the run before it)."""

@@ -374,3 +374,18 @@ def test_role_from_headers_requires_the_analyst_token(monkeypatch):
     assert server.role_from_headers({"x-data-role": "analyst"}) == "reader"
     monkeypatch.setattr(server, "ANALYST_TOKEN", "")
     assert server.role_from_headers({"x-data-role": "analyst", "x-data-token": ""}) == "reader"
+
+
+def test_alerts_report_the_latest_run_and_recent_history():
+    t = pa.Table.from_pylist
+    alert = {"severity": "critical", "kind": "late_source", "dataset": "bronze.orders", "message": "late"}
+    cat = Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": "r1", "started_at": "2026-01-01", "ended_at": "x", "status": "OK"},
+                                       {"run_id": "r2", "started_at": "2026-01-02", "ended_at": "x", "status": "OK"}])),
+        "alerts": ("lineage", t([{**alert, "run_id": "r1", "raised_at": "2026-01-01"}])),
+        "source_freshness": ("lineage", t([{"run_id": "r2", "source": "orders", "last_arrival": "x", "age_minutes": 1.0,
+                                            "max_age_minutes": 60, "status": "on_time"}])),
+    })
+    res = cat.alerts()
+    assert res["run_id"] == "r2" and res["active"] == [] and res["recent"][0]["run_id"] == "r1"
+    assert res["sources"][0]["status"] == "on_time"
