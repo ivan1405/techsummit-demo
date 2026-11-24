@@ -77,6 +77,15 @@ def get_column_lineage(dataset: str, column: str, run_id: str = "") -> str:
 
 
 @mcp.tool()
+def explain_column(dataset: str, column: str) -> str:
+    """Explain one column (e.g. dataset='gold.customer_360', column='revenue'): business description, type,
+    profile, how it is calculated (each upstream hop with its transformation, back to the source columns),
+    where it is used downstream, data-quality rules of the job that builds it and the dataset's contract status.
+    Use it for 'how is X calculated', 'where does X come from' or 'can I trust X'."""
+    return _safe(catalog.explain_column, dataset, column)
+
+
+@mcp.tool()
 def get_data_quality(run_id: str = "") -> str:
     """Rows dropped per data-quality rule for the latest or given pipeline run."""
     return _safe(catalog.data_quality, run_id or None)

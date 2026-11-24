@@ -266,6 +266,46 @@ class Catalog:
                 "amber" if d["freshness"] == "stale" else "green"
         return {"run_id": run_id, "checked_at": now.isoformat(), "datasets": list(datasets.values())}
 
+    def explain_column(self, dataset: str, column: str) -> dict:
+        """Everything known about one column: dictionary entry, upstream trace, downstream uses,
+        data-quality rules of the job that builds it and the dataset's contract status."""
+        entry = next((c for d in self.data_dictionary(dataset)["datasets"] for c in d["columns"]
+                      if c["column_name"] == column), None)
+        if entry is None:
+            raise QueryError(f"Unknown column {dataset}.{column}.")
+        run_id = self._latest_run_id()
+        try:
+            upstream = self.column_lineage(dataset, column, run_id)
+            steps, origins = upstream["steps"], upstream["origins"]
+        except QueryError:
+            steps, origins = [], [entry["upstream"]] if entry.get("upstream") else []
+        edges = self._rows("SELECT DISTINCT source_dataset, source_column, target_dataset, target_column, "
+                           "transformation FROM lineage_columns WHERE run_id = ?", [run_id])
+        downstream, frontier, seen = [], [(dataset, column)], set()
+        while frontier:
+            ref = frontier.pop()
+            for e in edges:
+                tgt = (e["target_dataset"], e["target_column"])
+                if (e["source_dataset"], e["source_column"]) == ref and tgt not in seen:
+                    seen.add(tgt)
+                    frontier.append(tgt)
+                    downstream.append({"dataset": tgt[0], "column": tgt[1], "from": ".".join(ref),
+                                       "transformation": e["transformation"]})
+        jobs = [j["job_name"] for j in self._rows("SELECT job_name, outputs FROM lineage_jobs WHERE run_id = ?", [run_id])
+                if dataset in j["outputs"].split(", ")]
+        quality = self._rows("SELECT job_name, rule, rows_affected FROM data_quality WHERE run_id = ? "
+                             "AND list_contains(?, job_name) ORDER BY rows_affected DESC", [run_id, jobs]) \
+            if jobs and "data_quality" in self.tables else []
+        contract = None
+        if "contract_checks" in self.tables:
+            contract = next((d for d in self.contracts(run_id)["datasets"] if d["dataset"] == dataset), None)
+        return {"run_id": run_id, "dataset": dataset, "column": column, **{k: v for k, v in entry.items()
+                                                                         if k != "column_name"},
+                "steps": steps, "origins": origins, "downstream": downstream, "built_by": jobs,
+                "quality": quality,
+                "contract": {k: contract[k] for k in ("status", "owner", "freshness", "age_minutes", "failed")}
+                if contract else None}
+
     # ---- run history & run-to-run diff -------------------------------------------------
 
     def _snapshots(self, run_ids: list[str]) -> dict[str, dict]:

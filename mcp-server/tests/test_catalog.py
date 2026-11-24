@@ -267,3 +267,20 @@ def test_run_diff_errors(runs_catalog):
         runs_catalog.run_diff("run-a")
     with pytest.raises(QueryError, match="Unknown run"):
         runs_catalog.run_diff("nope")
+
+
+def test_explain_column_combines_dictionary_upstream_and_downstream(dict_catalog):
+    res = dict_catalog.explain_column("gold.sales", "amount")
+    assert res["description"] == "Order line amount in EUR." and res["data_type"] == "float64"
+    assert {s["source_column"] for s in res["steps"]} >= {"quantity", "unit_price"}
+    assert res["downstream"] == [{"dataset": "gold.daily", "column": "revenue", "from": "gold.sales.amount",
+                                  "transformation": "x"}]
+    assert res["built_by"] == ["job_gold.sales"] and res["contract"] is None
+
+
+def test_explain_column_without_column_lineage_falls_back_to_upstream(dict_catalog):
+    res = dict_catalog.explain_column("bronze.orders", "quantity")
+    assert res["steps"] == [] and res["origins"] == ["source.orders.csv.quantity"]
+    assert res["downstream"][0]["dataset"] == "silver.orders"
+    with pytest.raises(QueryError, match="Unknown column"):
+        dict_catalog.explain_column("gold.sales", "nope")
