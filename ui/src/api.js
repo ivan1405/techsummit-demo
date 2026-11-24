@@ -26,6 +26,12 @@ export const api = {
   suggestLinks: (name) => post("/api/sources/suggest", { name }),
   validateLinks: (name, links, feed) => post("/api/sources/validate", { name, links, feed }),
   acceptSource: (source) => post("/api/sources/accept", source),
+  plan: (name, links, feed) => post("/api/sources/plan", { name, links, feed }),
+  publishPlan: (name, links, feed) => post("/api/sources/plan/publish", { name, links, feed }),
+  confluenceStatus: () => request("/api/confluence/status"),
+  confluenceSearch: (q, label) =>
+    request(`/api/confluence/search?q=${encodeURIComponent(q)}&label=${encodeURIComponent(label)}`),
+  confluencePage: (id) => request(`/api/confluence/pages/${encodeURIComponent(id)}`),
   connections: () => request("/api/connections"),
   saveConnection: (conn) => post("/api/connections", conn),
   deleteConnection: (name) => request(`/api/connections/${encodeURIComponent(name)}`, { method: "DELETE" }),
