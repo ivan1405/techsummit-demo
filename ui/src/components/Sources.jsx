@@ -185,7 +185,6 @@ export default function AddSource({ onClose, onImplemented }) {
             <textarea name="query" rows={2} value={form.query} onChange={set("query")} placeholder="SELECT * FROM support_tickets WHERE opened_on > '2026-07-01'" />
           </label>
         )}
-        <button type="submit" className="primary" disabled={!!busy}>Profile source</button>
         {form.kind === "confluence" && (
           <>
             <p className="muted">Documented-only source: links are proposed and checked from the page's schema table, before any data exists.</p>
@@ -199,6 +198,7 @@ export default function AddSource({ onClose, onImplemented }) {
             <ConfluencePicker optional value={form.doc_page} schema={form.doc_schema} onChange={(patch) => setForm({ ...form, ...patch })} />
           </details>
         )}
+        <button type="submit" className="primary" disabled={!!busy}>Profile source</button>
         {form.kind === "file" && form.filename && <span className="muted"> {form.filename}</span>}
       </form>
 
