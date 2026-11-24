@@ -1,0 +1,365 @@
+{
+ "program": "Parser Rewards",
+ "members": [
+  {
+   "member": {
+    "customer_id": "C0010",
+    "tier": "gold"
+   },
+   "points": 96,
+   "email": "member0@example.com",
+   "joined": "2025-12-10"
+  },
+  {
+   "member": {
+    "customer_id": "C0048",
+    "tier": "silver"
+   },
+   "points": 3049,
+   "email": "member1@example.com",
+   "joined": "2025-02-13"
+  },
+  {
+   "member": {
+    "customer_id": "C0034",
+    "tier": "silver"
+   },
+   "points": 4826,
+   "email": "member2@example.com",
+   "joined": "2025-02-12"
+  },
+  {
+   "member": {
+    "customer_id": "C0017",
+    "tier": "silver"
+   },
+   "points": 2254,
+   "email": "member3@example.com",
+   "joined": "2025-01-09"
+  },
+  {
+   "member": {
+    "customer_id": "C0024",
+    "tier": "bronze"
+   },
+   "points": 422,
+   "email": "member4@example.com",
+   "joined": "2025-11-10"
+  },
+  {
+   "member": {
+    "customer_id": "C0009",
+    "tier": "gold"
+   },
+   "points": 1219,
+   "email": "member5@example.com",
+   "joined": "2025-04-09"
+  },
+  {
+   "member": {
+    "customer_id": "C0039",
+    "tier": "silver"
+   },
+   "points": 4185,
+   "email": "member6@example.com",
+   "joined": "2025-06-07"
+  },
+  {
+   "member": {
+    "customer_id": "C0053",
+    "tier": "silver"
+   },
+   "points": 3504,
+   "email": "member7@example.com",
+   "joined": "2025-01-26"
+  },
+  {
+   "member": {
+    "customer_id": "C0041",
+    "tier": "gold"
+   },
+   "points": 3277,
+   "email": "member8@example.com",
+   "joined": "2025-09-18"
+  },
+  {
+   "member": {
+    "customer_id": "C0033",
+    "tier": "bronze"
+   },
+   "points": 660,
+   "email": "member9@example.com",
+   "joined": "2025-01-24"
+  },
+  {
+   "member": {
+    "customer_id": "C0018",
+    "tier": "silver"
+   },
+   "points": 3693,
+   "email": "member10@example.com",
+   "joined": "2025-10-25"
+  },
+  {
+   "member": {
+    "customer_id": "C0008",
+    "tier": "bronze"
+   },
+   "points": 2344,
+   "email": "member11@example.com",
+   "joined": "2025-08-02"
+  },
+  {
+   "member": {
+    "customer_id": "C0046",
+    "tier": "gold"
+   },
+   "points": 1042,
+   "email": "member12@example.com",
+   "joined": "2025-03-16"
+  },
+  {
+   "member": {
+    "customer_id": "C0056",
+    "tier": "silver"
+   },
+   "points": 2815,
+   "email": "member13@example.com",
+   "joined": "2025-05-10"
+  },
+  {
+   "member": {
+    "customer_id": "C0015",
+    "tier": "silver"
+   },
+   "points": 2131,
+   "email": "member14@example.com",
+   "joined": "2025-07-21"
+  },
+  {
+   "member": {
+    "customer_id": "C0032",
+    "tier": "bronze"
+   },
+   "points": 2464,
+   "email": "member15@example.com",
+   "joined": "2025-08-18"
+  },
+  {
+   "member": {
+    "customer_id": "C0045",
+    "tier": "gold"
+   },
+   "points": 3230,
+   "email": "member16@example.com",
+   "joined": "2025-02-06"
+  },
+  {
+   "member": {
+    "customer_id": "C0026",
+    "tier": "gold"
+   },
+   "points": 1324,
+   "email": "member17@example.com",
+   "joined": "2025-02-07"
+  },
+  {
+   "member": {
+    "customer_id": "C0002",
+    "tier": "gold"
+   },
+   "points": 4072,
+   "email": "member18@example.com",
+   "joined": "2025-09-08"
+  },
+  {
+   "member": {
+    "customer_id": "C0011",
+    "tier": "silver"
+   },
+   "points": 2726,
+   "email": "member19@example.com",
+   "joined": "2025-08-14"
+  },
+  {
+   "member": {
+    "customer_id": "C0001",
+    "tier": "bronze"
+   },
+   "points": 4487,
+   "email": "member20@example.com",
+   "joined": "2025-04-08"
+  },
+  {
+   "member": {
+    "customer_id": "C0044",
+    "tier": "bronze"
+   },
+   "points": 1431,
+   "email": "member21@example.com",
+   "joined": "2025-06-18"
+  },
+  {
+   "member": {
+    "customer_id": "C0029",
+    "tier": "bronze"
+   },
+   "points": 2615,
+   "email": "member22@example.com",
+   "joined": "2025-04-12"
+  },
+  {
+   "member": {
+    "customer_id": "C0043",
+    "tier": "silver"
+   },
+   "points": 4666,
+   "email": "member23@example.com",
+   "joined": "2025-04-01"
+  },
+  {
+   "member": {
+    "customer_id": "C0020",
+    "tier": "gold"
+   },
+   "points": 3381,
+   "email": "member24@example.com",
+   "joined": "2025-07-14"
+  },
+  {
+   "member": {
+    "customer_id": "C0060",
+    "tier": "gold"
+   },
+   "points": 4293,
+   "email": "member25@example.com",
+   "joined": "2025-04-13"
+  },
+  {
+   "member": {
+    "customer_id": "C0027",
+    "tier": "silver"
+   },
+   "points": 2770,
+   "email": "member26@example.com",
+   "joined": "2025-01-16"
+  },
+  {
+   "member": {
+    "customer_id": "C0023",
+    "tier": "silver"
+   },
+   "points": 4704,
+   "email": "member27@example.com",
+   "joined": "2025-06-05"
+  },
+  {
+   "member": {
+    "customer_id": "C0025",
+    "tier": "gold"
+   },
+   "points": 4123,
+   "email": "member28@example.com",
+   "joined": "2025-09-21"
+  },
+  {
+   "member": {
+    "customer_id": "C0052",
+    "tier": "bronze"
+   },
+   "points": 758,
+   "email": "member29@example.com",
+   "joined": "2025-05-08"
+  },
+  {
+   "member": {
+    "customer_id": "C0004",
+    "tier": "silver"
+   },
+   "points": 3274,
+   "email": "member30@example.com",
+   "joined": "2025-11-15"
+  },
+  {
+   "member": {
+    "customer_id": "C0058",
+    "tier": "silver"
+   },
+   "points": 2556,
+   "email": "member31@example.com",
+   "joined": "2025-01-05"
+  },
+  {
+   "member": {
+    "customer_id": "C0031",
+    "tier": "bronze"
+   },
+   "points": 3483,
+   "email": "member32@example.com",
+   "joined": "2025-12-25"
+  },
+  {
+   "member": {
+    "customer_id": "C0040",
+    "tier": "silver"
+   },
+   "points": 4810,
+   "email": "member33@example.com",
+   "joined": "2025-08-01"
+  },
+  {
+   "member": {
+    "customer_id": "C0028",
+    "tier": "bronze"
+   },
+   "points": 3207,
+   "email": "member34@example.com",
+   "joined": "2025-09-28"
+  },
+  {
+   "member": {
+    "customer_id": "C0054",
+    "tier": "silver"
+   },
+   "points": 3677,
+   "email": "member35@example.com",
+   "joined": "2025-04-26"
+  },
+  {
+   "member": {
+    "customer_id": "C0037",
+    "tier": "bronze"
+   },
+   "points": 1833,
+   "email": "member36@example.com",
+   "joined": "2025-03-05"
+  },
+  {
+   "member": {
+    "customer_id": "C0013",
+    "tier": "gold"
+   },
+   "points": 892,
+   "email": "member37@example.com",
+   "joined": "2025-12-23"
+  },
+  {
+   "member": {
+    "customer_id": "C0030",
+    "tier": "gold"
+   },
+   "points": 3746,
+   "email": "member38@example.com",
+   "joined": "2025-02-18"
+  },
+  {
+   "member": {
+    "customer_id": "C0007",
+    "tier": "bronze"
+   },
+   "points": 11,
+   "email": "member39@example.com",
+   "joined": "2025-03-08"
+  }
+ ]
+}
