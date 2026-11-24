@@ -1,5 +1,6 @@
 """FastAPI chat API in front of the LangGraph agent."""
 
+import asyncio
 import json
 import logging
 
@@ -11,7 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
 from . import confluence, linker, mcp_tools, plan
-from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
+from .config import CORS_ORIGINS, LLM_DEADLINE_S, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
 from .graph import build_graph
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -74,7 +75,8 @@ async def chat(req: ChatRequest):
     mode, note = ("llm" if LLM_PROVIDER != "none" else "demo"), ""
     try:
         graph = await get_graph()
-        result = await graph.ainvoke({"messages": history}, {"recursion_limit": 16})
+        result = await asyncio.wait_for(graph.ainvoke({"messages": history}, {"recursion_limit": 16}),
+                                        LLM_DEADLINE_S if LLM_PROVIDER != "none" else None)
     except Exception as exc:
         if LLM_PROVIDER == "none":
             log.exception("Agent failed")
@@ -101,6 +103,8 @@ async def chat(req: ChatRequest):
 
 def _failure(exc: Exception) -> str:
     """Short, non-sensitive reason for an LLM failure (details go to the agent log only)."""
+    if isinstance(exc, TimeoutError):
+        return f"no reply within {LLM_DEADLINE_S:.0f} s"
     status = getattr(exc, "status_code", None)
     return f"HTTP {status}" if status else type(exc).__name__
 
