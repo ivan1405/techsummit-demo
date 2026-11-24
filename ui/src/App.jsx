@@ -84,11 +84,11 @@ export default function App() {
       </header>
       <main>
         <Chat question={question} hidden={tab !== "chat"} />
-        {tab === "lineage" && <Lineage onAsk={ask} key={role} />}
-        {tab === "dictionary" && <Dictionary onAsk={ask} key={role} />}
-        {tab === "impact" && <Impact key={role} />}
-        {tab === "quality" && <Quality key={role} />}
-        {tab === "runs" && <Runs key={role} />}
+        {tab === "lineage" && <Lineage onAsk={ask} />}
+        {tab === "dictionary" && <Dictionary onAsk={ask} role={role} />}
+        {tab === "impact" && <Impact />}
+        {tab === "quality" && <Quality />}
+        {tab === "runs" && <Runs />}
       </main>
     </div>
   );

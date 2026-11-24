@@ -10,7 +10,7 @@ function matches(text, needle) {
   return (text || "").toLowerCase().includes(needle);
 }
 
-export default function Dictionary({ onAsk }) {
+export default function Dictionary({ onAsk, role }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -30,7 +30,7 @@ export default function Dictionary({ onAsk }) {
       .contracts()
       .then((c) => setContracts(Object.fromEntries(c.datasets.map((d) => [d.dataset, d]))))
       .catch(() => setContracts({}));
-  }, [version]);
+  }, [version, role]);
 
   const datasets = useMemo(() => {
     if (!data) return [];
