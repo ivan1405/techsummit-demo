@@ -1,5 +1,12 @@
-async function request(path, options) {
-  const res = await fetch(path, options);
+let dataRole = localStorage.getItem("dataRole") || "reader";
+export const getRole = () => dataRole;
+export const setRole = (role) => {
+  dataRole = role;
+  localStorage.setItem("dataRole", role);
+};
+
+async function request(path, options = {}) {
+  const res = await fetch(path, { ...options, headers: { ...options.headers, "X-Data-Role": dataRole } });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.detail || `HTTP ${res.status}`);
   return body;

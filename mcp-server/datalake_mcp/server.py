@@ -4,13 +4,15 @@ import json
 import logging
 import os
 
-from mcp.server.fastmcp import FastMCP
+import hmac
+
+from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from . import sources
-from .catalog import DEFAULT_MAX_ROWS, Catalog, QueryError
+from .catalog import ANALYST, DEFAULT_MAX_ROWS, READER, Catalog, QueryError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -34,6 +36,25 @@ mcp = FastMCP(
 )
 
 
+ANALYST_TOKEN = os.getenv("MCP_ANALYST_TOKEN", "")
+
+
+def role_from_headers(headers) -> str:
+    """Callers get unmasked PII only with X-Data-Role: analyst plus the shared analyst token."""
+    token = headers.get("x-data-token", "")
+    if headers.get("x-data-role") == ANALYST and ANALYST_TOKEN and hmac.compare_digest(token, ANALYST_TOKEN):
+        return ANALYST
+    return READER
+
+
+def _role(ctx: Context) -> str:
+    try:
+        request = ctx.request_context.request
+    except (AttributeError, ValueError):
+        return READER
+    return role_from_headers(request.headers) if request is not None else READER
+
+
 def _safe(fn, *args, **kwargs) -> str:
     try:
         return json.dumps(fn(*args, **kwargs), default=str)
@@ -48,15 +69,16 @@ def list_tables() -> str:
 
 
 @mcp.tool()
-def describe_table(table: str) -> str:
-    """Show the columns, types and 5 sample rows of a table."""
-    return _safe(catalog.describe_table, table)
+def describe_table(table: str, ctx: Context) -> str:
+    """Show the columns, types (with PII tags) and 5 sample rows of a table."""
+    return _safe(catalog.describe_table, table, _role(ctx))
 
 
 @mcp.tool()
-def query(sql: str, max_rows: int = DEFAULT_MAX_ROWS) -> str:
-    """Run ONE read-only DuckDB SELECT query over the lake tables and return columns + rows (max 1000)."""
-    return _safe(catalog.query, sql, max_rows)
+def query(sql: str, ctx: Context, max_rows: int = DEFAULT_MAX_ROWS) -> str:
+    """Run ONE read-only DuckDB SELECT query over the lake tables and return columns + rows (max 1000).
+    For the reader role, columns tagged as PII (emails, names, ...) come back masked."""
+    return _safe(catalog.query, sql, max_rows, _role(ctx))
 
 
 @mcp.tool()
@@ -77,12 +99,12 @@ def get_column_lineage(dataset: str, column: str, run_id: str = "") -> str:
 
 
 @mcp.tool()
-def explain_column(dataset: str, column: str) -> str:
+def explain_column(dataset: str, column: str, ctx: Context) -> str:
     """Explain one column (e.g. dataset='gold.customer_360', column='revenue'): business description, type,
     profile, how it is calculated (each upstream hop with its transformation, back to the source columns),
     where it is used downstream, data-quality rules of the job that builds it and the dataset's contract status.
     Use it for 'how is X calculated', 'where does X come from' or 'can I trust X'."""
-    return _safe(catalog.explain_column, dataset, column)
+    return _safe(catalog.explain_column, dataset, column, _role(ctx))
 
 
 @mcp.tool()
@@ -116,11 +138,11 @@ def compare_runs(run_id: str = "", base_run_id: str = "") -> str:
 
 
 @mcp.tool()
-def get_data_dictionary(dataset: str = "", search: str = "") -> str:
+def get_data_dictionary(ctx: Context, dataset: str = "", search: str = "") -> str:
     """Data dictionary of every bronze/silver/gold dataset: description, row count and, per column, type,
-    business description, null %, distinct count, sample values and upstream columns.
+    business description, null %, distinct count, sample values, upstream columns and PII tag (pii, pii_origin).
     Filter with dataset (e.g. 'gold.sales') or a free-text search (e.g. 'email')."""
-    return _safe(catalog.data_dictionary, dataset or None, search or None)
+    return _safe(catalog.data_dictionary, dataset or None, search or None, role=_role(ctx))
 
 
 @mcp.tool()

@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import secrets
 import threading
 from collections import deque
 from datetime import datetime, timezone
@@ -36,6 +37,22 @@ TABLE_DOCS = {
 DEFAULT_MAX_ROWS = 200
 
 
+READER, ANALYST = "reader", "analyst"
+# Reader masks per PII tag: a hint plus a short token, so equal values stay equal and readers can still count distinct
+# values and join on masked columns. The token is keyed with a per-process secret so readers cannot fingerprint values
+# (e.g. hash every possible birth date). Analysts see raw values.
+MASK_KEY = secrets.token_hex(16)
+_TOKEN = "'***-' || left(md5('" + MASK_KEY + "' || CAST({c} AS VARCHAR)), 6)"
+MASKS = {
+    "email": "CASE WHEN {c} IS NULL THEN NULL WHEN contains(CAST({c} AS VARCHAR), '@') THEN "
+             "left(CAST({c} AS VARCHAR), 1) || " + _TOKEN + " || regexp_extract(CAST({c} AS VARCHAR), '@[^@]*$') "
+             "ELSE " + _TOKEN + " END",
+    "name": "CASE WHEN {c} IS NULL THEN NULL ELSE left(CAST({c} AS VARCHAR), 1) || " + _TOKEN + " END",
+}
+DEFAULT_MASK = "CASE WHEN {c} IS NULL THEN NULL ELSE " + _TOKEN + " END"
+MASKED = "***"
+
+
 class QueryError(ValueError):
     pass
 
@@ -49,6 +66,8 @@ class Catalog:
         self._lock = threading.RLock()
         self._fingerprint: tuple | None = None
         self._con: duckdb.DuckDBPyConnection | None = None
+        self._reader: duckdb.DuckDBPyConnection | None = None
+        self.pii: dict[str, dict[str, str]] = {}
         self.tables: dict[str, str] = {}
         self._values: dict[str, set[str]] = {}
 
@@ -89,13 +108,50 @@ class Catalog:
             con.register("_incoming", table)
             con.execute(f'CREATE TABLE "{name}" AS SELECT * FROM _incoming')
             con.unregister("_incoming")
-        con.execute("SET enable_external_access = false")
-        con.execute("SET lock_configuration = true")
-        old, self._con = self._con, con
+        pii = self._pii(con, tables)
+        reader = duckdb.connect(":memory:")
+        for name in tables:
+            masks = [f'{MASKS.get(tag, DEFAULT_MASK).format(c=_ident(col))} AS {_ident(col)}'
+                     for col, tag in pii.get(name, {}).items()]
+            if name == "data_dictionary" and "pii" in _columns(con, name):
+                masks.append(f"CASE WHEN coalesce(pii, '') <> '' OR (dataset, column_name) IN (SELECT dataset, column_name "
+                             f"FROM data_dictionary WHERE coalesce(pii, '') <> '') THEN '{MASKED}' "
+                             f"ELSE sample_values END AS sample_values")
+            select = f'SELECT * REPLACE ({", ".join(masks)}) FROM "{name}"' if masks else f'SELECT * FROM "{name}"'
+            reader.register("_incoming", con.sql(select).to_arrow_table())
+            reader.execute(f'CREATE TABLE "{name}" AS SELECT * FROM _incoming')
+            reader.unregister("_incoming")
+        for c in (con, reader):
+            c.execute("SET enable_external_access = false")
+            c.execute("SET lock_configuration = true")
+        old = (self._con, self._reader)
+        self._con, self._reader, self.pii = con, reader, pii
         self.tables = {name: bucket for name, (bucket, _) in tables.items()}
         self._values = {}
-        if old is not None:
-            old.close()
+        for c in old:
+            if c is not None:
+                c.close()
+
+    @staticmethod
+    def _pii(con: duckdb.DuckDBPyConnection, tables: dict) -> dict[str, dict[str, str]]:
+        """{table: {column: pii tag}} for the lake tables, from each dataset's most recent dictionary entry (a removed
+        source keeps its last tags, as its tables stay in the lake)."""
+        if "data_dictionary" not in tables or "lineage_runs" not in tables \
+                or "pii" not in _columns(con, "data_dictionary"):
+            return {}
+        rows = con.execute(
+            "SELECT dataset, column_name, pii FROM ("
+            "  SELECT d.dataset, d.column_name, d.pii,"
+            "         rank() OVER (PARTITION BY d.dataset ORDER BY r.started_at DESC) AS recency"
+            "  FROM data_dictionary d JOIN lineage_runs r USING (run_id)"
+            "  WHERE d.pii IS NOT NULL"
+            ") WHERE recency = 1 AND pii <> ''").fetchall()
+        out: dict[str, dict[str, str]] = {}
+        for dataset, column, tag in rows:
+            layer, name = dataset.split(".", 1)
+            if tables.get(name, (None,))[0] == layer and column in _columns(con, name):
+                out.setdefault(name, {})[column] = tag
+        return out
 
     def refresh(self) -> None:
         """Reload tables from the lake when any parquet object changed (cheap ETag check)."""
@@ -123,7 +179,12 @@ class Catalog:
 
     # ---- generic SQL -------------------------------------------------------------------
 
-    def query(self, sql: str, max_rows: int = DEFAULT_MAX_ROWS) -> dict:
+    def _con_for(self, role: str) -> duckdb.DuckDBPyConnection:
+        con = self.con
+        return con if role == ANALYST else self._reader
+
+    def query(self, sql: str, max_rows: int = DEFAULT_MAX_ROWS, role: str = READER) -> dict:
+        """Read-only SELECT. The reader role queries copies of the tables with PII columns masked."""
         statements = duckdb.extract_statements(sql)
         if len(statements) != 1:
             raise QueryError("Exactly one SQL statement is allowed.")
@@ -132,7 +193,7 @@ class Catalog:
         max_rows = max(1, min(int(max_rows), 1000))
         with self._lock:
             try:
-                cur = self.con.cursor().execute(statements[0].query)
+                cur = self._con_for(role).cursor().execute(statements[0].query)
                 columns = [d[0] for d in cur.description]
                 rows = cur.fetchmany(max_rows + 1)
             except duckdb.Error as exc:
@@ -152,16 +213,17 @@ class Catalog:
             out.append({"table": name, "layer": bucket, "rows": rows, "description": TABLE_DOCS.get(name, "")})
         return out
 
-    def describe_table(self, table: str) -> dict:
+    def describe_table(self, table: str, role: str = READER) -> dict:
         if table not in self.tables and (self.refresh() or table not in self.tables):
             raise QueryError(f"Unknown table '{table}'. Use list_tables to see available tables.")
-        cols = self.con.execute(f'DESCRIBE "{table}"').fetchall()
-        sample = self.query(f'SELECT * FROM "{table}" LIMIT 5')
+        cols = self._con_for(role).execute(f'DESCRIBE "{table}"').fetchall()
+        sample = self.query(f'SELECT * FROM "{table}" LIMIT 5', role=role)
         return {
             "table": table,
             "layer": self.tables[table],
             "description": TABLE_DOCS.get(table, ""),
-            "columns": [{"name": c[0], "type": c[1]} for c in cols],
+            "columns": [{"name": c[0], "type": c[1], **({"pii": self.pii[table][c[0]]}
+                                                          if c[0] in self.pii.get(table, {}) else {})} for c in cols],
             "sample": sample,
         }
 
@@ -266,10 +328,10 @@ class Catalog:
                 "amber" if d["freshness"] == "stale" else "green"
         return {"run_id": run_id, "checked_at": now.isoformat(), "datasets": list(datasets.values())}
 
-    def explain_column(self, dataset: str, column: str) -> dict:
+    def explain_column(self, dataset: str, column: str, role: str = READER) -> dict:
         """Everything known about one column: dictionary entry, upstream trace, downstream uses,
         data-quality rules of the job that builds it and the dataset's contract status."""
-        entry = next((c for d in self.data_dictionary(dataset)["datasets"] for c in d["columns"]
+        entry = next((c for d in self.data_dictionary(dataset, role=role)["datasets"] for c in d["columns"]
                       if c["column_name"] == column), None)
         if entry is None:
             raise QueryError(f"Unknown column {dataset}.{column}.")
@@ -394,14 +456,19 @@ class Catalog:
     # ---- data dictionary & what-if impact -----------------------------------------------
 
     def data_dictionary(self, dataset: str | None = None, search: str | None = None,
-                        run_id: str | None = None) -> dict:
-        """Every dataset with its description, row count and documented columns."""
+                        run_id: str | None = None, role: str = READER) -> dict:
+        """Every dataset with its description, row count and documented columns (sample values of PII columns
+        are masked for the reader role)."""
         run_id = run_id or self._latest_run_id()
         if "data_dictionary" not in self.tables:
             raise QueryError("No data dictionary recorded yet. Re-run the pipeline.")
         rows = self._rows(
             "SELECT dataset, layer, column_name, data_type, description, null_pct, distinct_count, sample_values, "
-            "upstream, transformation FROM data_dictionary WHERE run_id = ? ORDER BY dataset, position", [run_id])
+            "upstream, transformation, " + ("pii, pii_origin" if "pii" in _columns(self.con, "data_dictionary")
+                                            else "'' AS pii, '' AS pii_origin")
+            + " FROM data_dictionary WHERE run_id = ? ORDER BY dataset, position", [run_id])
+        if role != ANALYST:
+            rows = [{**r, "sample_values": MASKED} if r["pii"] else r for r in rows]
         graph = self.lineage_graph(run_id=run_id)
         rows_out = {n["id"]: n["rows"] for n in graph["nodes"]}
         docs = {o: j["description"] for j in graph["jobs"] for o in j["outputs"].split(", ")}
@@ -432,7 +499,7 @@ class Catalog:
         exclude: a source name whose own onboarded tables and columns are left out (re-onboarding)."""
         own = (f"silver.{exclude}.", f"bronze.{exclude}.") if exclude else ()
         out = {}
-        for d in self.data_dictionary()["datasets"]:
+        for d in self.data_dictionary(role=ANALYST)["datasets"]:
             if d["layer"] not in ("silver", "gold") or (exclude and d["dataset"] == f"silver.{exclude}"):
                 continue
             for c in d["columns"]:
@@ -581,3 +648,11 @@ def _jsonable(v):
     if v is None or isinstance(v, (str, int, float, bool)):
         return v
     return str(v)
+
+
+def _ident(name: str) -> str:
+    return '"' + name.replace('"', '""') + '"'
+
+
+def _columns(con: duckdb.DuckDBPyConnection, table: str) -> set[str]:
+    return {r[0] for r in con.execute(f'DESCRIBE "{table}"').fetchall()}

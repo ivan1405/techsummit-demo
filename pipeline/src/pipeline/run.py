@@ -180,7 +180,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
                    "\n".join(json.dumps(e) for e in rec.events).encode())
     for table, df in rec.tables().items():
         lake.append_parquet(settings.lineage_bucket, table, df)
-    lake.append_parquet(settings.lineage_bucket, "data_dictionary", dictionary.table(dictionary_rows))
+    lake.append_parquet(settings.lineage_bucket, "data_dictionary", dictionary.table(dictionary.tag_pii(dictionary_rows)))
     lake.append_parquet(settings.lineage_bucket, "contract_checks", contracts.table(contract_rows))
 
     summary = {

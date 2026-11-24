@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "./api.js";
+import { api, getRole, setRole as storeRole } from "./api.js";
 import Chat from "./components/Chat.jsx";
 import Dictionary from "./components/Dictionary.jsx";
 import Impact from "./components/Impact.jsx";
@@ -16,6 +16,11 @@ export default function App() {
     history.replaceState(null, "", `#${id}`);
   };
   const [health, setHealth] = useState(null);
+  const [role, setRoleState] = useState(getRole);
+  const setRole = (next) => {
+    storeRole(next);
+    setRoleState(next);
+  };
   const [question, setQuestion] = useState(null);
   const ask = (text) => {
     setQuestion({ text, id: Date.now() });
@@ -36,7 +41,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    api.health().then(setHealth).catch(() => setHealth({ status: "down" }));
+    api.health().then((h) => {
+      setHealth(h);
+      if (!h.roles?.includes(getRole())) setRole("reader");
+    }).catch(() => setHealth({ status: "down" }));
   }, []);
 
   return (
@@ -61,6 +69,14 @@ export default function App() {
           <span className={`badge ${health?.status === "ok" ? "ok" : "down"}`}>
             {health?.status === "ok" ? (health.model ? `LLM: ${health.model}` : "Demo mode (no LLM)") : "Agent offline"}
           </span>
+          <label className="role-select" title="Data role for chat and dictionary: readers see personal data masked">
+            <select aria-label="Data role" className={role === "analyst" ? "pii-on" : ""} value={role}
+                    onChange={(e) => setRole(e.target.value)}>
+              {(health?.roles || ["reader"]).map((r) => (
+                <option key={r} value={r}>{r === "analyst" ? "Analyst · PII visible" : "Reader · PII masked"}</option>
+              ))}
+            </select>
+          </label>
           <button className="theme-toggle" onClick={toggleTheme} aria-pressed={dark}>
             {dark ? "Light" : "Dark"} mode
           </button>
@@ -69,7 +85,7 @@ export default function App() {
       <main>
         <Chat question={question} hidden={tab !== "chat"} />
         {tab === "lineage" && <Lineage onAsk={ask} />}
-        {tab === "dictionary" && <Dictionary onAsk={ask} />}
+        {tab === "dictionary" && <Dictionary onAsk={ask} role={role} />}
         {tab === "impact" && <Impact />}
         {tab === "quality" && <Quality />}
         {tab === "runs" && <Runs />}

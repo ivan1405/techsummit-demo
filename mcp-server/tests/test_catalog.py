@@ -1,7 +1,8 @@
+import hashlib
 import pyarrow as pa
 import pytest
 
-from datalake_mcp.catalog import Catalog, QueryError
+from datalake_mcp.catalog import MASK_KEY, Catalog, QueryError
 
 RUN = "run-1"
 
@@ -285,3 +286,91 @@ def test_explain_column_without_column_lineage_falls_back_to_upstream(dict_catal
     assert res["downstream"][0]["dataset"] == "silver.orders"
     with pytest.raises(QueryError, match="Unknown column"):
         dict_catalog.explain_column("gold.sales", "nope")
+
+
+@pytest.fixture
+def pii_catalog():
+    t = pa.Table.from_pylist
+    dd = [{"run_id": RUN, "dataset": "gold.customer_360", "layer": "gold", "column_name": c, "position": i,
+           "data_type": "str", "description": c, "null_pct": 0.0, "distinct_count": 2, "sample_values": s,
+           "upstream": "", "transformation": "", "pii": tag, "pii_origin": f"bronze.customers.{c}" if tag else ""}
+          for i, (c, s, tag) in enumerate([("customer_id", "C1", ""), ("full_name", "Ana Diaz", "name"),
+                                           ("email", "ana@x.com", "email"), ("phone", "+34 600", "phone")])]
+    return Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": RUN, "started_at": "2026-01-01T00:00:00", "ended_at": "x",
+                                        "status": "COMPLETE"}])),
+        "data_dictionary": ("lineage", t(dd + [{**dd[2], "run_id": "old", "pii": None, "pii_origin": None}])),
+        "lineage_edges": ("lineage", t([{"run_id": RUN, "job_name": "gold_customer_360",
+                                         "source_dataset": "bronze.customers", "target_dataset": "gold.customer_360"}])),
+        "lineage_jobs": ("lineage", t([{"run_id": RUN, "job_name": "gold_customer_360", "layer": "gold",
+                                        "description": "builds", "inputs": "bronze.customers",
+                                        "outputs": "gold.customer_360", "rows_in": 2, "rows_out": 2,
+                                        "rows_dropped": 0, "status": "COMPLETE", "started_at": "x",
+                                        "ended_at": "y"}])),
+        "lineage_columns": ("lineage", t([{"run_id": RUN, "job_name": "gold_customer_360",
+                                           "target_dataset": "gold.customer_360", "target_column": "email",
+                                           "source_dataset": "bronze.customers", "source_column": "email",
+                                           "transformation": "direct copy"}])),
+        "customer_360": ("gold", t([{"customer_id": "C1", "full_name": "Ana Diaz", "email": "ana@x.com",
+                                     "phone": "+34 600"},
+                                    {"customer_id": "C2", "full_name": None, "email": None, "phone": None}])),
+    })
+
+
+def test_reader_role_masks_pii_in_sql_samples_and_dictionary(pii_catalog):
+    sql = "SELECT * FROM customer_360 ORDER BY customer_id"
+    tok = lambda v: "***-" + hashlib.md5((MASK_KEY + v).encode()).hexdigest()[:6]  # noqa: E731
+    assert pii_catalog.query(sql)["rows"] == [["C1", "A" + tok("Ana Diaz"), "a" + tok("ana@x.com") + "@x.com",
+                                               tok("+34 600")], ["C2", None, None, None]]
+    assert pii_catalog.query(sql, role="analyst")["rows"][0] == ["C1", "Ana Diaz", "ana@x.com", "+34 600"]
+    assert pii_catalog.query("SELECT count(DISTINCT email) FROM customer_360")["rows"] == [[1]]
+    desc = pii_catalog.describe_table("customer_360")
+    assert {c["name"]: c.get("pii") for c in desc["columns"]}["email"] == "email"
+    assert desc["sample"]["rows"][0][2] == "a" + tok("ana@x.com") + "@x.com"
+    cols = {c["column_name"]: c for c in pii_catalog.data_dictionary("gold.customer_360")["datasets"][0]["columns"]}
+    assert cols["email"]["sample_values"] == "***" and cols["customer_id"]["sample_values"] == "C1"
+    assert cols["email"]["pii_origin"] == "bronze.customers.email"
+    assert pii_catalog.query("SELECT sample_values FROM data_dictionary WHERE column_name = 'email'")["rows"] == [
+        ["***"], ["***"]]  # rows from runs before tagging are masked too
+    analyst = pii_catalog.data_dictionary("gold.customer_360", role="analyst")["datasets"][0]["columns"]
+    assert analyst[2]["sample_values"] == "ana@x.com"
+
+
+def test_reader_masks_keep_distinct_counts_and_hide_malformed_emails():
+    t = pa.Table.from_pylist
+    entry = {"run_id": RUN, "layer": "gold", "position": 0, "data_type": "str", "description": "", "null_pct": 0.0,
+             "distinct_count": 1, "sample_values": "", "upstream": "", "transformation": "", "pii_origin": ""}
+    cat = Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": RUN, "started_at": "2026-01-01", "ended_at": "x", "status": "OK"}])),
+        "data_dictionary": ("lineage", t([{**entry, "dataset": "gold.c", "column_name": "email", "pii": "email"}])),
+        "c": ("gold", t([{"email": e} for e in ["ana@x.com", "alex@x.com", "ana.diaz-no-at-sign"]])),
+    })
+    rows = [r[0] for r in cat.query("SELECT email FROM c")["rows"]]
+    assert len(set(rows)) == 3 and not any("ana.diaz" in r or "alex" in r for r in rows)
+    assert cat.query("SELECT count(DISTINCT email) FROM c")["rows"] == [[3]]
+
+
+def test_tables_of_removed_sources_keep_their_last_pii_tags():
+    t = pa.Table.from_pylist
+    entry = {"layer": "gold", "position": 0, "data_type": "str", "description": "", "null_pct": 0.0,
+             "distinct_count": 1, "sample_values": "", "upstream": "", "transformation": "", "pii_origin": ""}
+    cat = Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": "r1", "started_at": "2026-01-01", "ended_at": "x", "status": "COMPLETE"},
+                                       {"run_id": "r2", "started_at": "2026-01-02", "ended_at": "x", "status": "COMPLETE"}])),
+        "data_dictionary": ("lineage", t([
+            {**entry, "run_id": "r1", "dataset": "gold.loyalty", "column_name": "email", "pii": "email"},
+            {**entry, "run_id": "r2", "dataset": "gold.sales", "column_name": "order_id", "pii": ""}])),
+        "loyalty": ("gold", t([{"email": "ana@x.com"}])),
+    })
+    assert cat.pii == {"loyalty": {"email": "email"}}
+    assert cat.query("SELECT email FROM loyalty")["rows"][0][0] != "ana@x.com"
+
+
+def test_role_from_headers_requires_the_analyst_token(monkeypatch):
+    from datalake_mcp import server
+    monkeypatch.setattr(server, "ANALYST_TOKEN", "s3cret")
+    assert server.role_from_headers({"x-data-role": "analyst", "x-data-token": "s3cret"}) == "analyst"
+    assert server.role_from_headers({"x-data-role": "analyst", "x-data-token": "nope"}) == "reader"
+    assert server.role_from_headers({"x-data-role": "analyst"}) == "reader"
+    monkeypatch.setattr(server, "ANALYST_TOKEN", "")
+    assert server.role_from_headers({"x-data-role": "analyst", "x-data-token": ""}) == "reader"
