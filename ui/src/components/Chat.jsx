@@ -17,7 +17,9 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages, loading]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   async function send(text) {
     const content = text.trim();
