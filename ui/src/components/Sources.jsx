@@ -335,7 +335,7 @@ export default function AddSource({ onClose, onImplemented }) {
             <div className="actions">
               <button onClick={() => download(plan.markdown, `${source.name}-plan-${plan.id}.md`, "text/markdown")}>Download Markdown</button>
               <button onClick={() => download({ ...plan, markdown: undefined }, `${source.name}-plan-${plan.id}.json`)}>Download JSON</button>
-              <button onClick={publish} disabled={!!busy || !!published}>{published ? "Published" : "Publish to Confluence"}</button>
+              <button onClick={publish} disabled={!!busy || !!published}>{published ? (published.existing ? "Already published" : "Published") : "Publish to Confluence"}</button>
               {published && <a className="button-link" href={published.url} target="_blank" rel="noreferrer">Open “{published.title}”</a>}
             </div>
           )}
