@@ -137,7 +137,7 @@ def profile(dataset: str, df: pd.DataFrame, lineage: ColumnLineage, run_id: str)
             "layer": dataset.split(".", 1)[0],
             "column_name": col,
             "position": pos,
-            "data_type": str(dtype).replace("object", "string"),
+            "data_type": "string" if str(dtype) in ("object", "str", "string") else str(dtype),
             "description": describe(dataset, col),
             "null_pct": round(float(values.isna().mean()) * 100, 1) if len(df) else 0.0,
             "distinct_count": int(values.nunique(dropna=True)),
