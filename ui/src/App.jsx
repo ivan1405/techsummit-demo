@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, getRole, setRole as storeRole } from "./api.js";
 import Chat from "./components/Chat.jsx";
 import Dictionary from "./components/Dictionary.jsx";
@@ -17,6 +17,13 @@ export default function App() {
   };
   const [health, setHealth] = useState(null);
   const [role, setRoleState] = useState(getRole);
+  const [alerts, setAlerts] = useState([]);
+  const refreshAlerts = useCallback(() => api.alerts().then((a) => setAlerts(a.active)).catch(() => setAlerts([])), []);
+  useEffect(() => {
+    refreshAlerts();
+    const id = setInterval(refreshAlerts, 30000);
+    return () => clearInterval(id);
+  }, [refreshAlerts]);
   const setRole = (next) => {
     storeRole(next);
     setRoleState(next);
@@ -66,6 +73,12 @@ export default function App() {
           ))}
         </nav>
         <div className="header-end">
+          {alerts.length > 0 && (
+            <button className="badge down alert-badge" onClick={() => setTab("runs")}
+                    title={alerts.map((a) => `${a.dataset}: ${a.message}`).join("\n")}>
+              {alerts.length} alert{alerts.length > 1 ? "s" : ""}
+            </button>
+          )}
           <span className={`badge ${health?.status === "ok" ? "ok" : "down"}`}>
             {health?.status === "ok" ? (health.model ? `LLM: ${health.model}` : "Demo mode (no LLM)") : "Agent offline"}
           </span>
@@ -88,7 +101,7 @@ export default function App() {
         {tab === "dictionary" && <Dictionary onAsk={ask} role={role} />}
         {tab === "impact" && <Impact />}
         {tab === "quality" && <Quality />}
-        {tab === "runs" && <Runs />}
+        {tab === "runs" && <Runs onAlerts={refreshAlerts} />}
       </main>
     </div>
   );

@@ -33,6 +33,17 @@ export const api = {
   runDiff: (runId, base) =>
     request(`/api/runs/diff?run_id=${encodeURIComponent(runId)}&base=${encodeURIComponent(base)}`),
   runPipeline: () => post("/api/runs", {}),
+  schedule: () => request("/api/schedule"),
+  setSchedule: ({ enabled, interval_minutes }) =>
+    request("/api/schedule", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled, interval_minutes }),
+    }),
+  arrivals: () => request("/api/arrivals"),
+  delaySource: (source, minutes) => post(`/api/arrivals/${encodeURIComponent(source)}/late`, { minutes }),
+  deliverSource: (source) => request(`/api/arrivals/${encodeURIComponent(source)}/late`, { method: "DELETE" }),
+  alerts: () => request("/api/alerts"),
   stageSource: (source) => post("/api/sources", source),
   suggestLinks: (name) => post("/api/sources/suggest", { name }),
   validateLinks: (name, links, feed) => post("/api/sources/validate", { name, links, feed }),
