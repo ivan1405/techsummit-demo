@@ -13,6 +13,13 @@ export default function App() {
     history.replaceState(null, "", `#${id}`);
   };
   const [health, setHealth] = useState(null);
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const toggleTheme = () => {
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+    setDark(next);
+  };
 
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth({ status: "down" }));
@@ -22,22 +29,28 @@ export default function App() {
     <div className="app">
       <header>
         <div className="brand">
-          <span className="logo">P</span>
+          <img src="/assets/logo-dark.svg" alt="Parser" />
+          <span className="divider" />
           <div>
-            <h1>Parser AI · Data Assistant</h1>
+            <h1>Data Assistant</h1>
             <p>Medallion lakehouse · MCP · LangGraph</p>
           </div>
         </div>
-        <nav>
+        <nav role="tablist">
           {Object.entries(TABS).map(([id, label]) => (
-            <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>
               {label}
             </button>
           ))}
         </nav>
-        <span className={`badge ${health?.status === "ok" ? "ok" : "down"}`}>
-          {health?.status === "ok" ? (health.model ? `LLM: ${health.model}` : "Demo mode (no LLM)") : "Agent offline"}
-        </span>
+        <div className="header-end">
+          <span className={`badge ${health?.status === "ok" ? "ok" : "down"}`}>
+            {health?.status === "ok" ? (health.model ? `LLM: ${health.model}` : "Demo mode (no LLM)") : "Agent offline"}
+          </span>
+          <button className="theme-toggle" onClick={toggleTheme} aria-pressed={dark}>
+            {dark ? "Light" : "Dark"} mode
+          </button>
+        </div>
       </header>
       <main>
         {tab === "chat" && <Chat />}

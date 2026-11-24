@@ -1,10 +1,12 @@
 """LangGraph agent that answers questions about the data lake through MCP tools."""
 
-from langchain_core.messages import AIMessage, SystemMessage
+import json
+
+from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from . import demo
+from . import demo, mcp_tools
 from .config import LLM_MODEL, LLM_PROVIDER
 
 SYSTEM_PROMPT = """You are the Parser AI data assistant for the Tech Summit data platform.
@@ -43,7 +45,19 @@ def build_graph(tools: list):
 
     if llm is None:
         async def demo_agent(state: MessagesState):
-            return {"messages": [AIMessage(content=await demo.answer(state["messages"][-1].content))]}
+            recorded: list = []
+            token = mcp_tools.calls.set(recorded)
+            try:
+                reply = await demo.answer(state["messages"][-1].content)
+            finally:
+                mcp_tools.calls.reset(token)
+            messages = []
+            for i, (name, args, result) in enumerate(recorded):
+                call_id = f"demo-{i}"
+                messages.append(AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": call_id}]))
+                messages.append(ToolMessage(content=json.dumps(result, default=str), tool_call_id=call_id, name=name))
+            messages.append(AIMessage(content=reply))
+            return {"messages": messages}
 
         graph.add_node("agent", demo_agent)
         graph.add_edge(START, "agent")
