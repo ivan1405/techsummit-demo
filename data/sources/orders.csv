@@ -1,0 +1,413 @@
+order_id,order_date,customer_id,product_id,product_name,category,quantity,unit_price,status
+O00001,2026/07/02,C0040,P-401,Laptop Stand,Accessories,2,"39,0",returned
+O00002,23/07/2026,C0046,P-100,Noise Cancelling Headphones,Audio,5,"199,0",delivered 
+O00003,2026-07-08,C0056,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,DELIVERED
+O00004,22/06/2026,C0044,P-100,Noise Cancelling Headphones,Audio,-2,199.00,DELIVERED
+O00005,2026-10-29,C0038,P-101,Wireless Earbuds,Audio,1,89.00,cancelled
+O00006,2026-06-23,C0050,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,DELIVERED
+O00007,2026/07/06,C0028,P-300,Mechanical Keyboard,Peripherals,1,"129,0",shipped
+O00008,2026/10/03,C0012,P-301,Ergonomic Mouse,Peripherals,1,59.00,DELIVERED
+O00009,2026-07-12,C0015,P-401,Laptop Stand,Accessories,1,"39,0",shipped
+O00010,2026-08-02,C0047,P-201,"Portable Monitor 15""",Displays,5,179.00 EUR,delivered 
+O00011,11/07/2026,,P-101,Wireless Earbuds,Audio,3,"89,0",returned
+O00012,2026-08-02,C0040,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,Shipped
+O00013,2026-09-04,C0018,P-300,Mechanical Keyboard,Peripherals,1,129.00,shipped
+O00014,2026-07-03,C0008,P-100,Noise Cancelling Headphones,Audio,1,"199,0",delivered
+O00015,2026/08/25,C0017,P-200,"4K Monitor 27""",Displays,5,349.00 EUR,delivered 
+O00016,2026/06/12,C0032,P-401,Laptop Stand,Accessories,1,"39,0",cancelled
+O00017,2026/06/14,C0045,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,returned
+O00018,2026/06/28,C0022,P-200,"4K Monitor 27""",Displays,1,"349,0",cancelled
+O00019,09/09/2026,C0024,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,Shipped
+O00020,03/06/2026,C0043,P-100,Noise Cancelling Headphones,Audio,3,"199,0",delivered 
+O00021,2026-09-06,C0050,P-200,"4K Monitor 27""",Displays,2,n/a,DELIVERED
+O00022,2026/08/11,C0029,P-401,Laptop Stand,Accessories,1,39.00 EUR,shipped
+O00023,07/06/2026,C0024,P-300,Mechanical Keyboard,Peripherals,3,"129,0",delivered
+O00024,2026/09/29,C0024,P-101,Wireless Earbuds,Audio,3,89.00 EUR,delivered
+O00025,2026/10/15,C0033,P-100,Noise Cancelling Headphones,Audio,1,199.00,returned
+O00026,13/09/2026,C0008,P-101,Wireless Earbuds,Audio,2,89.00,cancelled
+O00027,15/08/2026,C0057,P-200,"4K Monitor 27""",Displays,2,349.00,DELIVERED
+O00028,2026-08-25,C0010,P-100,Noise Cancelling Headphones,Audio,5,199.00 EUR,delivered
+O00029,14/10/2026,C0009,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,shipped
+O00030,05/07/2026,C0002,P-400,USB-C Docking Station,Accessories,1,"149,0",shipped
+O00031,31/02/2026,C0009,P-400,USB-C Docking Station,Accessories,1,"149,0",DELIVERED
+O00032,2026/08/06,C0012,P-301,Ergonomic Mouse,Peripherals,2,59.00,DELIVERED
+O00033,2026/08/25,C0044,P-100,Noise Cancelling Headphones,Audio,1,"199,0",returned
+O00034,2026/07/23,C0058,P-200,"4K Monitor 27""",Displays,5,"349,0",shipped
+O00035,11/08/2026,C0001,P-400,USB-C Docking Station,Accessories,3,149.00 EUR,shipped
+O00036,11/10/2026,C0002,P-401,Laptop Stand,Accessories,5,39.00,shipped
+O00037,04/08/2026,C0058,P-400,USB-C Docking Station,Accessories,1,"149,0",DELIVERED
+O00038,19/06/2026,C0027,P-401,Laptop Stand,Accessories,1,"39,0",cancelled
+O00039,08/09/2026,C0030,P-200,"4K Monitor 27""",Displays,5,349.00 EUR,Shipped
+O00040,03/09/2026,C0059,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,cancelled
+O00041,2026-07-04,C0044,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,delivered
+O00042,31/07/2026,C0005,P-400,USB-C Docking Station,Accessories,3,149.00,shipped
+O00043,2026/10/20,C0050,P-200,"4K Monitor 27""",Displays,5,349.00,Shipped
+O00044,2026/08/02,C0043,P-300,Mechanical Keyboard,Peripherals,1,"129,0",returned
+O00045,2026-09-20,C0020,P-200,"4K Monitor 27""",Displays,1,"349,0",delivered
+O00046,20/09/2026,C0018,P-400,USB-C Docking Station,Accessories,5,149.00,Shipped
+O00047,2026/09/19,C0047,P-401,Laptop Stand,Accessories,1,39.00 EUR,shipped
+O00048,2026/09/01,C0036,P-101,Wireless Earbuds,Audio,2,89.00 EUR,cancelled
+O00049,04/07/2026,C0048,P-400,USB-C Docking Station,Accessories,2,"149,0",cancelled
+O00050,2026-06-20,C0042,P-300,Mechanical Keyboard,Peripherals,1,129.00,DELIVERED
+O00051,26/10/2026,C0034,P-100,Noise Cancelling Headphones,Audio,2,"199,0",delivered 
+O00052,2026-06-07,C0024,P-100,Noise Cancelling Headphones,Audio,5,"199,0",Shipped
+O00053,2026-06-03,C0042,P-200,"4K Monitor 27""",Displays,1,349.00,Shipped
+O00054,2026-06-12,C0029,P-201,"Portable Monitor 15""",Displays,2,179.00,Shipped
+O00055,2026/09/17,C0012,P-201,"Portable Monitor 15""",Displays,1,179.00,delivered 
+O00056,2026-09-21,C0002,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,delivered
+O00057,22/07/2026,C0014,P-401,Laptop Stand,Accessories,2,"39,0",Shipped
+O00058,2026-09-11,C0012,P-400,USB-C Docking Station,Accessories,1,"149,0",DELIVERED
+O00059,2026/06/16,C0002,P-401,Laptop Stand,Accessories,5,39.00 EUR,shipped
+O00060,2026-07-05,C0046,P-200,"4K Monitor 27""",Displays,2,349.00,returned
+O00061,2026/06/15,C0023,P-201,"Portable Monitor 15""",Displays,3,179.00,shipped
+O00062,02/07/2026,C0045,P-401,Laptop Stand,Accessories,5,39.00 EUR,delivered 
+O00063,2026/08/03,C0030,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,delivered 
+O00064,2026-07-01,C0038,P-300,Mechanical Keyboard,Peripherals,1,129.00 EUR,DELIVERED
+O00065,2026/07/25,C0010,P-300,Mechanical Keyboard,Peripherals,2,129.00 EUR,cancelled
+O00066,2026/09/03,C0039,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,delivered 
+O00067,21/06/2026,C0004,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,cancelled
+O00068,2026-10-13,C0008,P-100,Noise Cancelling Headphones,Audio,2,"199,0",delivered 
+O00069,14/10/2026,C0031,P-200,"4K Monitor 27""",Displays,5,349.00,shipped
+O00070,08/07/2026,C0039,P-300,Mechanical Keyboard,Peripherals,2,129.00 EUR,Shipped
+O00071,2026/10/03,C0008,P-101,Wireless Earbuds,Audio,1,"89,0",Shipped
+O00072,2026-09-22,C0060,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,delivered
+O00073,2026/06/05,C0007,P-100,Noise Cancelling Headphones,Audio,5,199.00 EUR,DELIVERED
+O00074,12/07/2026,C0004,P-100,Noise Cancelling Headphones,Audio,1,199.00,delivered
+O00075,2026/07/05,C0050,P-401,Laptop Stand,Accessories,3,"39,0",delivered 
+O00076,19/10/2026,C0036,P-401,Laptop Stand,Accessories,1,39.00 EUR,shipped
+O00077,04/06/2026,C0033,P-200,"4K Monitor 27""",Displays,1,"349,0",shipped
+O00078,2026-09-06,C0054,P-200,"4K Monitor 27""",Displays,3,349.00 EUR,delivered 
+O00079,2026/08/05,C0003,P-401,Laptop Stand,Accessories,2,"39,0",Shipped
+O00080,2026-07-21,C0053,P-200,"4K Monitor 27""",Displays,1,"349,0",Shipped
+O00081,2026-08-15,C0039,P-401,Laptop Stand,Accessories,1,39.00 EUR,returned
+O00082,2026-06-14,C0036,P-300,Mechanical Keyboard,Peripherals,1,"129,0",shipped
+O00083,22/06/2026,C0006,P-100,Noise Cancelling Headphones,Audio,1,199.00,delivered
+O00084,07/07/2026,C0036,P-401,Laptop Stand,Accessories,3,"39,0",delivered
+O00085,2026-08-11,C0056,P-400,USB-C Docking Station,Accessories,3,149.00 EUR,Shipped
+O00086,2026-09-05,C0006,P-200,"4K Monitor 27""",Displays,5,"349,0",returned
+O00087,2026-07-10,C0011,P-301,Ergonomic Mouse,Peripherals,2,"59,0",shipped
+O00088,2026/09/08,C0011,P-100,Noise Cancelling Headphones,Audio,2,199.00,Shipped
+O00089,25/10/2026,C0037,P-301,Ergonomic Mouse,Peripherals,5,59.00,Shipped
+O00090,2026-08-18,C0005,P-101,Wireless Earbuds,Audio,1,"89,0",Shipped
+O00091,2026-09-22,C0046,P-301,Ergonomic Mouse,Peripherals,2,59.00 EUR,shipped
+O00092,2026-07-21,C0057,P-401,Laptop Stand,Accessories,1,"39,0",shipped
+O00093,2026/10/24,C0023,P-300,Mechanical Keyboard,Peripherals,1,129.00,DELIVERED
+O00094,2026-06-22,C0050,P-401,Laptop Stand,Accessories,1,39.00,Shipped
+O00095,2026/06/11,C0053,P-200,"4K Monitor 27""",Displays,5,349.00,delivered 
+O00096,05/07/2026,C0026,P-400,USB-C Docking Station,Accessories,3,149.00 EUR,delivered 
+O00097,08/08/2026,C0058,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,delivered
+O00098,2026/07/01,C0040,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,shipped
+O00099,2026-09-11,C0038,P-201,"Portable Monitor 15""",Displays,2,"179,0",returned
+O00100,2026/06/08,C0033,P-300,Mechanical Keyboard,Peripherals,5,"129,0",shipped
+O00101,26/08/2026,C0032,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,cancelled
+O00102,2026/08/17,C0039,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,DELIVERED
+O00103,2026-10-25,C0004,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,Shipped
+O00104,2026-09-11,C0023,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,cancelled
+O00105,21/06/2026,C0007,P-101,Wireless Earbuds,Audio,1,89.00,Shipped
+O00106,2026/06/18,C0058,P-101,Wireless Earbuds,Audio,5,89.00,cancelled
+O00107,2026-09-24,C0008,P-301,Ergonomic Mouse,Peripherals,2,59.00,Shipped
+O00108,2026/07/07,C0046,P-300,Mechanical Keyboard,Peripherals,2,129.00,cancelled
+O00109,24/08/2026,C0002,P-401,Laptop Stand,Accessories,1,39.00 EUR,Shipped
+O00110,22/06/2026,C0053,P-400,USB-C Docking Station,Accessories,1,"149,0",returned
+O00111,26/06/2026,C0048,P-400,USB-C Docking Station,Accessories,3,"149,0",delivered 
+O00112,2026-06-26,C0048,P-300,Mechanical Keyboard,Peripherals,5,"129,0",Shipped
+O00113,2026-10-15,C0012,P-300,Mechanical Keyboard,Peripherals,3,129.00 EUR,Shipped
+O00114,2026/07/15,C0038,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,Shipped
+O00115,09/09/2026,C0001,P-301,Ergonomic Mouse,Peripherals,1,"59,0",shipped
+O00116,2026-06-27,C0012,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,delivered 
+O00117,2026/09/26,C0012,P-100,Noise Cancelling Headphones,Audio,5,199.00,DELIVERED
+O00118,2026/09/28,C0033,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,cancelled
+O00119,19/07/2026,C0016,P-100,Noise Cancelling Headphones,Audio,2,199.00,cancelled
+O00120,2026-07-13,C0033,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,shipped
+O00121,13/07/2026,C0034,P-101,Wireless Earbuds,Audio,1,89.00 EUR,Shipped
+O00122,23/09/2026,C0007,P-300,Mechanical Keyboard,Peripherals,1,"129,0",Shipped
+O00123,2026-09-14,C0045,P-401,Laptop Stand,Accessories,2,"39,0",delivered 
+O00124,2026/09/16,C0052,P-401,Laptop Stand,Accessories,1,39.00 EUR,cancelled
+O00125,2026-08-10,C0048,P-101,Wireless Earbuds,Audio,5,89.00,returned
+O00126,2026-06-05,C0031,P-300,Mechanical Keyboard,Peripherals,3,"129,0",returned
+O00127,2026-07-01,C0042,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,cancelled
+O00128,2026/08/27,C0030,P-100,Noise Cancelling Headphones,Audio,1,"199,0",delivered 
+O00129,2026/09/19,C0048,P-100,Noise Cancelling Headphones,Audio,1,199.00,shipped
+O00130,2026-08-22,C0034,P-401,Laptop Stand,Accessories,5,39.00 EUR,Shipped
+O00131,2026-07-20,C0055,P-400,USB-C Docking Station,Accessories,2,"149,0",cancelled
+O00132,2026-08-29,C0036,P-400,USB-C Docking Station,Accessories,2,149.00,delivered 
+O00133,2026/06/27,C0008,P-401,Laptop Stand,Accessories,2,39.00 EUR,shipped
+O00134,2026-09-24,C0030,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,delivered 
+O00135,2026/10/19,C0055,P-400,USB-C Docking Station,Accessories,1,"149,0",cancelled
+O00136,28/06/2026,C0002,P-401,Laptop Stand,Accessories,5,39.00,cancelled
+O00137,2026-10-18,C0010,P-300,Mechanical Keyboard,Peripherals,3,"129,0",returned
+O00138,2026-09-30,C0015,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,returned
+O00139,2026/06/29,C0011,P-401,Laptop Stand,Accessories,1,39.00 EUR,shipped
+O00140,2026/06/12,C0031,P-101,Wireless Earbuds,Audio,1,89.00,Shipped
+O00141,2026/08/15,C0042,P-401,Laptop Stand,Accessories,3,"39,0",delivered 
+O00142,2026-07-16,C0059,P-301,Ergonomic Mouse,Peripherals,2,"59,0",returned
+O00143,2026/06/09,C0052,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,delivered
+O00144,2026/08/31,C0009,P-201,"Portable Monitor 15""",Displays,1,179.00,returned
+O00145,2026/10/04,C0044,P-401,Laptop Stand,Accessories,5,39.00,cancelled
+O00146,28/09/2026,C0037,P-300,Mechanical Keyboard,Peripherals,1,129.00,returned
+O00147,2026/09/09,C0055,P-400,USB-C Docking Station,Accessories,1,149.00,cancelled
+O00148,2026-06-14,C0046,P-400,USB-C Docking Station,Accessories,1,"149,0",returned
+O00149,2026/09/20,C0038,P-400,USB-C Docking Station,Accessories,3,"149,0",shipped
+O00150,2026-10-19,C0057,P-200,"4K Monitor 27""",Displays,2,"349,0",delivered
+O00151,2026/08/10,C0059,P-300,Mechanical Keyboard,Peripherals,3,129.00 EUR,delivered 
+O00152,18/08/2026,C0031,P-401,Laptop Stand,Accessories,1,39.00,cancelled
+O00153,2026-10-01,C0030,P-301,Ergonomic Mouse,Peripherals,1,59.00,shipped
+O00154,2026/09/16,C0011,P-401,Laptop Stand,Accessories,2,39.00 EUR,DELIVERED
+O00155,2026/07/30,C0001,P-101,Wireless Earbuds,Audio,1,"89,0",shipped
+O00156,2026-08-06,C0009,P-201,"Portable Monitor 15""",Displays,1,"179,0",shipped
+O00157,2026/08/14,C0055,P-201,"Portable Monitor 15""",Displays,1,"179,0",cancelled
+O00158,2026/08/08,C0060,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,Shipped
+O00159,2026-08-01,C0016,P-401,Laptop Stand,Accessories,1,"39,0",DELIVERED
+O00160,2026-09-09,C0035,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,shipped
+O00161,2026/07/07,C0053,P-300,Mechanical Keyboard,Peripherals,2,"129,0",delivered 
+O00162,23/10/2026,C0045,P-401,Laptop Stand,Accessories,2,39.00 EUR,cancelled
+O00163,2026/10/14,C0021,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,delivered 
+O00164,2026-09-10,C0058,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,cancelled
+O00165,2026/06/21,C0013,P-300,Mechanical Keyboard,Peripherals,1,"129,0",DELIVERED
+O00166,2026/08/19,C0025,P-400,USB-C Docking Station,Accessories,3,"149,0",cancelled
+O00167,23/06/2026,C0047,P-300,Mechanical Keyboard,Peripherals,2,129.00,returned
+O00168,28/09/2026,C0002,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,delivered
+O00169,2026/09/25,C0056,P-301,Ergonomic Mouse,Peripherals,1,"59,0",shipped
+O00170,2026-08-11,C0034,P-101,Wireless Earbuds,Audio,1,89.00,delivered 
+O00171,2026-08-29,C0041,P-101,Wireless Earbuds,Audio,1,89.00,returned
+O00172,2026/07/23,C0046,P-101,Wireless Earbuds,Audio,2,"89,0",delivered
+O00173,2026-06-06,C0057,P-401,Laptop Stand,Accessories,2,"39,0",cancelled
+O00174,04/08/2026,C0007,P-301,Ergonomic Mouse,Peripherals,1,59.00,cancelled
+O00175,26/07/2026,C0049,P-301,Ergonomic Mouse,Peripherals,3,59.00,returned
+O00176,2026-07-25,C0056,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,Shipped
+O00177,2026/07/24,C0030,P-301,Ergonomic Mouse,Peripherals,2,"59,0",delivered
+O00178,2026/10/08,C0014,P-101,Wireless Earbuds,Audio,3,"89,0",cancelled
+O00179,2026/09/01,C0031,P-300,Mechanical Keyboard,Peripherals,1,"129,0",delivered 
+O00180,2026-09-20,C0014,P-301,Ergonomic Mouse,Peripherals,5,59.00 EUR,returned
+O00181,2026-10-16,C0009,P-301,Ergonomic Mouse,Peripherals,1,"59,0",delivered
+O00182,22/10/2026,C0003,P-300,Mechanical Keyboard,Peripherals,1,"129,0",Shipped
+O00183,2026/09/01,C0024,P-400,USB-C Docking Station,Accessories,1,"149,0",delivered
+O00184,2026/09/19,C0050,P-200,"4K Monitor 27""",Displays,1,349.00,cancelled
+O00185,2026/09/13,C0006,P-101,Wireless Earbuds,Audio,3,89.00,delivered
+O00186,07/08/2026,C0051,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,cancelled
+O00187,27/09/2026,C0002,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,shipped
+O00188,08/10/2026,C0025,P-301,Ergonomic Mouse,Peripherals,1,"59,0",returned
+O00189,2026/06/17,C0010,P-301,Ergonomic Mouse,Peripherals,1,"59,0",Shipped
+O00190,22/09/2026,C0021,P-201,"Portable Monitor 15""",Displays,1,179.00,Shipped
+O00191,31/07/2026,C0015,P-300,Mechanical Keyboard,Peripherals,2,"129,0",Shipped
+O00192,2026-06-20,C0001,P-101,Wireless Earbuds,Audio,1,"89,0",cancelled
+O00193,2026-07-19,C0035,P-301,Ergonomic Mouse,Peripherals,2,59.00 EUR,cancelled
+O00194,2026/08/22,C0010,P-300,Mechanical Keyboard,Peripherals,5,129.00,cancelled
+O00195,01/09/2026,C0050,P-400,USB-C Docking Station,Accessories,5,149.00 EUR,returned
+O00196,2026/10/04,C0029,P-401,Laptop Stand,Accessories,1,"39,0",delivered 
+O00197,05/07/2026,C0053,P-301,Ergonomic Mouse,Peripherals,2,"59,0",Shipped
+O00198,2026-10-19,C0020,P-201,"Portable Monitor 15""",Displays,5,"179,0",delivered
+O00199,2026/06/23,C0032,P-300,Mechanical Keyboard,Peripherals,1,129.00 EUR,returned
+O00200,30/09/2026,C0031,P-401,Laptop Stand,Accessories,2,39.00 EUR,DELIVERED
+O00201,2026-10-04,C0053,P-400,USB-C Docking Station,Accessories,2,149.00,delivered
+O00202,15/07/2026,C0016,P-101,Wireless Earbuds,Audio,5,"89,0",returned
+O00203,2026-08-23,C0009,P-101,Wireless Earbuds,Audio,1,"89,0",cancelled
+O00204,17/06/2026,C0033,P-201,"Portable Monitor 15""",Displays,1,179.00,delivered 
+O00205,2026/08/14,C0036,P-201,"Portable Monitor 15""",Displays,2,179.00,returned
+O00206,2026-09-01,C0060,P-200,"4K Monitor 27""",Displays,1,349.00,Shipped
+O00207,21/10/2026,C0044,P-201,"Portable Monitor 15""",Displays,3,"179,0",shipped
+O00208,04/09/2026,C0032,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,shipped
+O00209,12/08/2026,C0047,P-300,Mechanical Keyboard,Peripherals,1,129.00 EUR,returned
+O00210,15/09/2026,C0014,P-300,Mechanical Keyboard,Peripherals,5,129.00,shipped
+O00211,2026-06-24,C0030,P-101,Wireless Earbuds,Audio,2,89.00 EUR,delivered
+O00212,2026-06-24,C0012,P-300,Mechanical Keyboard,Peripherals,3,129.00,shipped
+O00213,2026-08-16,C0057,P-201,"Portable Monitor 15""",Displays,1,"179,0",returned
+O00214,2026/09/28,C0026,P-301,Ergonomic Mouse,Peripherals,1,59.00,delivered 
+O00215,2026/09/13,C0027,P-400,USB-C Docking Station,Accessories,1,"149,0",DELIVERED
+O00216,2026/06/14,C0005,P-101,Wireless Earbuds,Audio,2,89.00,DELIVERED
+O00217,25/07/2026,C0024,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,shipped
+O00218,16/10/2026,C0042,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,delivered
+O00219,2026/10/15,C0028,P-301,Ergonomic Mouse,Peripherals,3,59.00,delivered
+O00220,2026-07-02,C0044,P-401,Laptop Stand,Accessories,5,39.00 EUR,delivered
+O00221,2026/09/27,C0021,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,delivered 
+O00222,2026-07-02,C0008,P-200,"4K Monitor 27""",Displays,2,"349,0",delivered 
+O00223,2026/10/17,C0052,P-200,"4K Monitor 27""",Displays,2,"349,0",cancelled
+O00224,2026/10/17,C0030,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,cancelled
+O00225,2026-08-08,C0051,P-200,"4K Monitor 27""",Displays,1,"349,0",delivered 
+O00226,01/07/2026,C0056,P-300,Mechanical Keyboard,Peripherals,1,129.00,returned
+O00227,05/10/2026,C0034,P-100,Noise Cancelling Headphones,Audio,1,199.00,delivered
+O00228,2026/08/11,C0040,P-100,Noise Cancelling Headphones,Audio,2,"199,0",DELIVERED
+O00229,20/06/2026,C0024,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,delivered
+O00230,17/06/2026,C0019,P-200,"4K Monitor 27""",Displays,3,"349,0",delivered
+O00231,2026/07/14,C0014,P-400,USB-C Docking Station,Accessories,1,"149,0",cancelled
+O00232,15/08/2026,C0050,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,delivered
+O00233,29/07/2026,C0059,P-201,"Portable Monitor 15""",Displays,2,179.00 EUR,DELIVERED
+O00234,2026/07/15,C0055,P-401,Laptop Stand,Accessories,1,39.00 EUR,delivered
+O00235,2026/07/13,C0040,P-400,USB-C Docking Station,Accessories,1,"149,0",shipped
+O00236,2026/10/25,C0048,P-101,Wireless Earbuds,Audio,5,89.00,DELIVERED
+O00237,2026-10-22,C0037,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,shipped
+O00238,13/09/2026,C0038,P-200,"4K Monitor 27""",Displays,3,"349,0",delivered
+O00239,2026-10-05,C0049,P-101,Wireless Earbuds,Audio,1,89.00 EUR,Shipped
+O00240,2026-10-03,C0051,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,shipped
+O00241,2026-08-15,C0051,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,Shipped
+O00242,2026/08/10,C0057,P-301,Ergonomic Mouse,Peripherals,2,59.00 EUR,DELIVERED
+O00243,2026-06-21,C0043,P-101,Wireless Earbuds,Audio,2,89.00 EUR,returned
+O00244,23/10/2026,C0028,P-101,Wireless Earbuds,Audio,1,"89,0",returned
+O00245,20/09/2026,C0029,P-100,Noise Cancelling Headphones,Audio,5,"199,0",Shipped
+O00246,21/07/2026,C0033,P-401,Laptop Stand,Accessories,3,39.00 EUR,shipped
+O00247,2026/06/04,C0015,P-201,"Portable Monitor 15""",Displays,3,179.00 EUR,delivered
+O00248,24/09/2026,C0015,P-301,Ergonomic Mouse,Peripherals,2,59.00 EUR,delivered 
+O00249,2026/06/13,C0028,P-201,"Portable Monitor 15""",Displays,1,"179,0",delivered 
+O00250,24/08/2026,C0010,P-200,"4K Monitor 27""",Displays,1,"349,0",shipped
+O00251,25/09/2026,C0055,P-300,Mechanical Keyboard,Peripherals,5,129.00 EUR,DELIVERED
+O00252,2026/07/28,C0021,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,returned
+O00253,20/09/2026,C0014,P-301,Ergonomic Mouse,Peripherals,2,59.00,Shipped
+O00254,03/09/2026,C0033,P-401,Laptop Stand,Accessories,5,39.00 EUR,DELIVERED
+O00255,04/09/2026,C0001,P-300,Mechanical Keyboard,Peripherals,2,"129,0",returned
+O00256,2026-09-24,C0020,P-101,Wireless Earbuds,Audio,2,89.00 EUR,returned
+O00257,2026/07/11,C0038,P-300,Mechanical Keyboard,Peripherals,1,129.00,DELIVERED
+O00258,2026/10/01,C0059,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,delivered 
+O00259,2026/09/20,C0046,P-200,"4K Monitor 27""",Displays,5,349.00 EUR,cancelled
+O00260,26/07/2026,C0035,P-201,"Portable Monitor 15""",Displays,2,"179,0",shipped
+O00261,2026/06/11,C0003,P-101,Wireless Earbuds,Audio,2,"89,0",delivered
+O00262,2026/09/23,C0041,P-300,Mechanical Keyboard,Peripherals,2,"129,0",DELIVERED
+O00263,2026/09/27,C0051,P-301,Ergonomic Mouse,Peripherals,1,"59,0",shipped
+O00264,2026-07-04,C0023,P-101,Wireless Earbuds,Audio,5,89.00,returned
+O00265,2026/10/20,C0011,P-300,Mechanical Keyboard,Peripherals,2,129.00,delivered 
+O00266,13/10/2026,C0027,P-200,"4K Monitor 27""",Displays,2,349.00,shipped
+O00267,2026/10/18,C0002,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,delivered 
+O00268,12/07/2026,C0008,P-201,"Portable Monitor 15""",Displays,2,179.00,delivered
+O00269,2026-06-21,C0014,P-401,Laptop Stand,Accessories,5,39.00 EUR,shipped
+O00270,2026/09/12,C0039,P-101,Wireless Earbuds,Audio,2,"89,0",cancelled
+O00271,2026-10-27,C0018,P-101,Wireless Earbuds,Audio,1,89.00 EUR,shipped
+O00272,2026/06/01,C0043,P-201,"Portable Monitor 15""",Displays,1,179.00,DELIVERED
+O00273,2026-07-03,C0002,P-101,Wireless Earbuds,Audio,1,"89,0",shipped
+O00274,19/07/2026,C0013,P-401,Laptop Stand,Accessories,5,39.00,delivered
+O00275,2026-08-31,C0032,P-100,Noise Cancelling Headphones,Audio,1,"199,0",Shipped
+O00276,29/06/2026,C0034,P-200,"4K Monitor 27""",Displays,1,"349,0",Shipped
+O00277,19/08/2026,C0039,P-401,Laptop Stand,Accessories,1,39.00,Shipped
+O00278,2026-09-07,C0024,P-100,Noise Cancelling Headphones,Audio,1,"199,0",returned
+O00279,2026-10-17,C0026,P-200,"4K Monitor 27""",Displays,2,349.00,shipped
+O00280,2026-07-24,C0048,P-301,Ergonomic Mouse,Peripherals,5,59.00,shipped
+O00281,2026-07-12,C0029,P-401,Laptop Stand,Accessories,1,39.00 EUR,returned
+O00282,2026-09-24,C0055,P-101,Wireless Earbuds,Audio,1,"89,0",shipped
+O00283,2026-06-28,C0021,P-101,Wireless Earbuds,Audio,2,89.00,shipped
+O00284,2026-06-27,C0026,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,returned
+O00285,18/10/2026,C0024,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,delivered
+O00286,18/08/2026,C0016,P-401,Laptop Stand,Accessories,2,"39,0",delivered 
+O00287,2026-08-19,C0042,P-300,Mechanical Keyboard,Peripherals,2,"129,0",returned
+O00288,2026-07-18,C0057,P-201,"Portable Monitor 15""",Displays,3,179.00 EUR,Shipped
+O00289,2026-09-27,C0013,P-300,Mechanical Keyboard,Peripherals,3,129.00 EUR,delivered 
+O00290,17/09/2026,C0052,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,delivered
+O00291,2026/07/25,C0027,P-201,"Portable Monitor 15""",Displays,5,"179,0",delivered
+O00292,14/07/2026,C0002,P-300,Mechanical Keyboard,Peripherals,1,"129,0",Shipped
+O00293,29/06/2026,C0015,P-101,Wireless Earbuds,Audio,2,89.00,DELIVERED
+O00294,2026-08-18,C0052,P-300,Mechanical Keyboard,Peripherals,3,"129,0",cancelled
+O00295,2026-06-02,C0023,P-101,Wireless Earbuds,Audio,2,"89,0",returned
+O00296,02/10/2026,C0020,P-100,Noise Cancelling Headphones,Audio,1,"199,0",delivered
+O00297,2026-06-13,C0031,P-400,USB-C Docking Station,Accessories,5,149.00,cancelled
+O00298,08/07/2026,C0018,P-401,Laptop Stand,Accessories,2,39.00 EUR,delivered
+O00299,2026-09-12,C0024,P-301,Ergonomic Mouse,Peripherals,1,"59,0",delivered 
+O00300,2026/10/02,C0005,P-300,Mechanical Keyboard,Peripherals,2,129.00,Shipped
+O00301,2026/08/09,C0001,P-401,Laptop Stand,Accessories,1,39.00,returned
+O00302,2026/09/13,C0034,P-100,Noise Cancelling Headphones,Audio,2,199.00 EUR,delivered 
+O00303,2026/07/10,C0053,P-400,USB-C Docking Station,Accessories,5,149.00,DELIVERED
+O00304,23/06/2026,C0002,P-200,"4K Monitor 27""",Displays,3,349.00,Shipped
+O00305,03/08/2026,C0048,P-101,Wireless Earbuds,Audio,2,89.00 EUR,shipped
+O00306,2026-09-04,C0052,P-200,"4K Monitor 27""",Displays,5,"349,0",DELIVERED
+O00307,2026-07-08,C0016,P-401,Laptop Stand,Accessories,5,39.00,delivered
+O00308,09/09/2026,C0033,P-101,Wireless Earbuds,Audio,5,89.00 EUR,delivered 
+O00309,03/07/2026,C0034,P-200,"4K Monitor 27""",Displays,2,"349,0",Shipped
+O00310,2026-06-29,C0058,P-401,Laptop Stand,Accessories,2,"39,0",Shipped
+O00311,2026-08-11,C0056,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,delivered
+O00312,2026-10-18,C0028,P-300,Mechanical Keyboard,Peripherals,1,129.00 EUR,returned
+O00313,01/08/2026,C0033,P-101,Wireless Earbuds,Audio,1,89.00,DELIVERED
+O00314,2026-08-19,C0004,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,DELIVERED
+O00315,2026/07/07,C0001,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,shipped
+O00316,2026/09/16,C0022,P-100,Noise Cancelling Headphones,Audio,3,"199,0",delivered
+O00317,16/10/2026,C0059,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,DELIVERED
+O00318,2026-07-04,C0053,P-100,Noise Cancelling Headphones,Audio,1,199.00,Shipped
+O00319,2026/08/27,C0034,P-100,Noise Cancelling Headphones,Audio,1,199.00,shipped
+O00320,06/07/2026,C0050,P-301,Ergonomic Mouse,Peripherals,3,59.00 EUR,returned
+O00321,2026-09-09,C0016,P-101,Wireless Earbuds,Audio,5,89.00 EUR,DELIVERED
+O00322,2026-10-21,C0049,P-400,USB-C Docking Station,Accessories,1,149.00,delivered
+O00323,2026/06/07,C0023,P-100,Noise Cancelling Headphones,Audio,2,"199,0",cancelled
+O00324,2026-08-04,C0029,P-100,Noise Cancelling Headphones,Audio,2,199.00,cancelled
+O00325,2026-09-19,C0031,P-101,Wireless Earbuds,Audio,2,"89,0",Shipped
+O00326,19/10/2026,C0035,P-300,Mechanical Keyboard,Peripherals,2,"129,0",cancelled
+O00327,2026/10/14,C0012,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,Shipped
+O00328,22/08/2026,C0014,P-200,"4K Monitor 27""",Displays,2,349.00,DELIVERED
+O00329,2026/06/05,C0025,P-300,Mechanical Keyboard,Peripherals,3,"129,0",shipped
+O00330,2026-09-27,C0037,P-400,USB-C Docking Station,Accessories,5,"149,0",returned
+O00331,2026/06/23,C0018,P-401,Laptop Stand,Accessories,2,39.00,cancelled
+O00332,2026/08/25,C0004,P-400,USB-C Docking Station,Accessories,2,149.00,delivered
+O00333,2026/06/04,C0041,P-401,Laptop Stand,Accessories,3,39.00 EUR,delivered 
+O00334,2026/08/15,C0022,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,cancelled
+O00335,2026-10-21,C0021,P-101,Wireless Earbuds,Audio,1,89.00 EUR,shipped
+O00336,18/10/2026,C0048,P-201,"Portable Monitor 15""",Displays,1,179.00,delivered 
+O00337,2026/10/09,C0002,P-401,Laptop Stand,Accessories,1,"39,0",cancelled
+O00338,21/09/2026,C0013,P-400,USB-C Docking Station,Accessories,1,149.00,delivered
+O00339,24/09/2026,C0051,P-300,Mechanical Keyboard,Peripherals,5,129.00 EUR,DELIVERED
+O00340,02/08/2026,C0050,P-301,Ergonomic Mouse,Peripherals,5,59.00 EUR,shipped
+O00341,2026/07/19,C0058,P-401,Laptop Stand,Accessories,5,39.00,delivered
+O00342,2026/09/01,C0051,P-301,Ergonomic Mouse,Peripherals,3,59.00 EUR,shipped
+O00343,03/10/2026,C0049,P-200,"4K Monitor 27""",Displays,3,349.00 EUR,cancelled
+O00344,2026/07/11,C0060,P-400,USB-C Docking Station,Accessories,5,"149,0",DELIVERED
+O00345,26/10/2026,C0044,P-401,Laptop Stand,Accessories,1,"39,0",delivered
+O00346,03/10/2026,C0033,P-201,"Portable Monitor 15""",Displays,5,"179,0",returned
+O00347,2026-07-22,C0012,P-101,Wireless Earbuds,Audio,1,89.00 EUR,DELIVERED
+O00348,06/08/2026,C0012,P-101,Wireless Earbuds,Audio,5,"89,0",Shipped
+O00349,2026/10/02,C0053,P-300,Mechanical Keyboard,Peripherals,1,129.00 EUR,cancelled
+O00350,2026/10/16,C0052,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,Shipped
+O00351,06/06/2026,C0028,P-201,"Portable Monitor 15""",Displays,1,179.00 EUR,returned
+O00352,17/06/2026,C0047,P-200,"4K Monitor 27""",Displays,2,349.00 EUR,cancelled
+O00353,2026-10-24,C0054,P-300,Mechanical Keyboard,Peripherals,2,129.00,shipped
+O00354,2026/09/20,C0052,P-300,Mechanical Keyboard,Peripherals,2,129.00,returned
+O00355,2026/09/17,C0001,P-301,Ergonomic Mouse,Peripherals,2,59.00 EUR,cancelled
+O00356,18/07/2026,C0050,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,DELIVERED
+O00357,23/09/2026,C0012,P-400,USB-C Docking Station,Accessories,1,"149,0",DELIVERED
+O00358,19/10/2026,C0038,P-301,Ergonomic Mouse,Peripherals,2,"59,0",shipped
+O00359,2026/09/11,C0045,P-301,Ergonomic Mouse,Peripherals,2,59.00,delivered
+O00360,2026/06/11,C0015,P-101,Wireless Earbuds,Audio,1,89.00 EUR,DELIVERED
+O00361,2026/08/09,C0006,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,cancelled
+O00362,2026-09-24,C0032,P-400,USB-C Docking Station,Accessories,3,"149,0",returned
+O00363,04/08/2026,C0050,P-201,"Portable Monitor 15""",Displays,2,179.00,delivered
+O00364,28/09/2026,C0005,P-201,"Portable Monitor 15""",Displays,5,179.00 EUR,delivered
+O00365,2026/09/23,C0055,P-100,Noise Cancelling Headphones,Audio,3,199.00,shipped
+O00366,2026/06/01,C0003,P-301,Ergonomic Mouse,Peripherals,3,59.00,delivered
+O00367,14/08/2026,C0028,P-100,Noise Cancelling Headphones,Audio,1,199.00 EUR,delivered
+O00368,26/07/2026,C0054,P-101,Wireless Earbuds,Audio,3,89.00,shipped
+O00369,14/08/2026,C0055,P-100,Noise Cancelling Headphones,Audio,2,"199,0",delivered 
+O00370,2026/10/16,C0019,P-300,Mechanical Keyboard,Peripherals,3,129.00,shipped
+O00371,2026/08/10,C0046,P-200,"4K Monitor 27""",Displays,2,349.00,delivered 
+O00372,2026/06/28,C0056,P-400,USB-C Docking Station,Accessories,1,"149,0",Shipped
+O00373,27/08/2026,C0020,P-101,Wireless Earbuds,Audio,3,"89,0",DELIVERED
+O00374,2026-08-31,C0041,P-301,Ergonomic Mouse,Peripherals,1,59.00,delivered
+O00375,2026/07/09,C0010,P-301,Ergonomic Mouse,Peripherals,5,59.00,shipped
+O00376,16/10/2026,C0057,P-101,Wireless Earbuds,Audio,5,"89,0",Shipped
+O00377,2026-09-15,C0003,P-101,Wireless Earbuds,Audio,2,89.00 EUR,shipped
+O00378,15/10/2026,C0012,P-301,Ergonomic Mouse,Peripherals,2,59.00,returned
+O00379,2026-08-09,C0037,P-200,"4K Monitor 27""",Displays,1,349.00 EUR,DELIVERED
+O00380,2026-06-06,C0041,P-201,"Portable Monitor 15""",Displays,1,"179,0",returned
+O00381,2026/07/01,C0001,P-300,Mechanical Keyboard,Peripherals,2,"129,0",delivered
+O00382,12/06/2026,C0035,P-200,"4K Monitor 27""",Displays,2,349.00,DELIVERED
+O00383,18/07/2026,C0009,P-300,Mechanical Keyboard,Peripherals,2,129.00 EUR,delivered
+O00384,2026/10/23,C0001,P-400,USB-C Docking Station,Accessories,5,"149,0",returned
+O00385,06/08/2026,C0017,P-401,Laptop Stand,Accessories,2,39.00 EUR,Shipped
+O00386,12/10/2026,C0030,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,returned
+O00387,08/06/2026,C0014,P-101,Wireless Earbuds,Audio,3,89.00 EUR,cancelled
+O00388,2026/08/06,C0035,P-300,Mechanical Keyboard,Peripherals,1,"129,0",Shipped
+O00389,2026-10-08,C0045,P-301,Ergonomic Mouse,Peripherals,2,59.00,DELIVERED
+O00390,2026-09-22,C0002,P-400,USB-C Docking Station,Accessories,3,149.00,DELIVERED
+O00391,2026/07/15,C0034,P-200,"4K Monitor 27""",Displays,1,349.00,shipped
+O00392,24/09/2026,C0037,P-301,Ergonomic Mouse,Peripherals,1,"59,0",delivered
+O00393,2026-08-23,C0021,P-300,Mechanical Keyboard,Peripherals,2,129.00,delivered
+O00394,2026/08/18,C0016,P-200,"4K Monitor 27""",Displays,5,"349,0",delivered
+O00395,2026/08/17,C0057,P-401,Laptop Stand,Accessories,1,39.00,shipped
+O00396,26/08/2026,C0058,P-200,"4K Monitor 27""",Displays,3,349.00,Shipped
+O00397,2026/07/13,C0036,P-401,Laptop Stand,Accessories,1,"39,0",delivered
+O00398,2026/10/12,C0034,P-200,"4K Monitor 27""",Displays,5,349.00,shipped
+O00399,2026/10/10,C0025,P-301,Ergonomic Mouse,Peripherals,1,59.00 EUR,cancelled
+O00400,2026-09-18,C0004,P-300,Mechanical Keyboard,Peripherals,2,129.00,shipped
+O00137,2026-10-18,C0010,P-300,Mechanical Keyboard,Peripherals,3,"129,0",returned
+O00205,2026/08/14,C0036,P-201,"Portable Monitor 15""",Displays,2,179.00,returned
+O00055,2026/09/17,C0012,P-201,"Portable Monitor 15""",Displays,1,179.00,delivered 
+O00088,2026/09/08,C0011,P-100,Noise Cancelling Headphones,Audio,2,199.00,Shipped
+O00286,18/08/2026,C0016,P-401,Laptop Stand,Accessories,2,"39,0",delivered 
+O00163,2026/10/14,C0021,P-100,Noise Cancelling Headphones,Audio,3,199.00 EUR,delivered 
+O00113,2026-10-15,C0012,P-300,Mechanical Keyboard,Peripherals,3,129.00 EUR,Shipped
+O00167,23/06/2026,C0047,P-300,Mechanical Keyboard,Peripherals,2,129.00,returned
+O00141,2026/08/15,C0042,P-401,Laptop Stand,Accessories,3,"39,0",delivered 
+O00343,03/10/2026,C0049,P-200,"4K Monitor 27""",Displays,3,349.00 EUR,cancelled
+O00290,17/09/2026,C0052,P-400,USB-C Docking Station,Accessories,1,149.00 EUR,delivered
+O00116,2026-06-27,C0012,P-400,USB-C Docking Station,Accessories,2,149.00 EUR,delivered 

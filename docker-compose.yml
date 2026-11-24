@@ -1,0 +1,126 @@
+name: techsummit
+
+x-llm-env: &llm-env
+  LLM_PROVIDER: ${LLM_PROVIDER:-none}
+  LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.55
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "8333:8333"
+    volumes:
+      - ./infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+      - lake-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname -i):8333/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  pipeline:
+    build: ./pipeline
+    environment:
+      <<: *llm-env
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: lakeadmin
+      S3_SECRET_KEY: lakeadmin-secret
+      SOURCES_DIR: /data/sources
+      OPENLINEAGE_URL: ${OPENLINEAGE_URL:-}
+    volumes:
+      - ./data/sources:/data/sources:ro
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    restart: "no"
+
+  mcp-server:
+    build: ./mcp-server
+    environment:
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: lakereader
+      S3_SECRET_KEY: lakereader-secret
+    ports:
+      - "8000:8000"
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+      pipeline:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  agent:
+    build: ./agent
+    environment:
+      <<: *llm-env
+      MCP_URL: http://mcp-server:8000/mcp
+    ports:
+      - "8080:8080"
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  ui:
+    build: ./ui
+    ports:
+      - "3000:80"
+    depends_on:
+      agent:
+        condition: service_healthy
+
+  # Optional: Marquez, the reference OpenLineage UI. Start with:
+  #   OPENLINEAGE_URL=http://marquez:5000 docker compose --profile marquez up
+  marquez-db:
+    profiles: ["marquez"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: marquez
+      POSTGRES_PASSWORD: marquez
+      POSTGRES_DB: marquez
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marquez"]
+      interval: 5s
+      retries: 20
+
+  marquez:
+    profiles: ["marquez"]
+    image: marquezproject/marquez:0.51.1
+    environment:
+      MARQUEZ_PORT: 5000
+      MARQUEZ_ADMIN_PORT: 5001
+      POSTGRES_HOST: marquez-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: marquez
+      POSTGRES_USER: marquez
+      POSTGRES_PASSWORD: marquez
+    ports:
+      - "5000:5000"
+    depends_on:
+      marquez-db:
+        condition: service_healthy
+
+  marquez-web:
+    profiles: ["marquez"]
+    image: marquezproject/marquez-web:0.51.1
+    environment:
+      MARQUEZ_HOST: marquez
+      MARQUEZ_PORT: 5000
+    ports:
+      - "3001:3000"
+    depends_on:
+      - marquez
+
+volumes:
+  lake-data:

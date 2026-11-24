@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component:
+          - { dir: pipeline, req: requirements-dev.txt }
+          - { dir: mcp-server, req: requirements.txt }
+    defaults:
+      run:
+        working-directory: ${{ matrix.component.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r ${{ matrix.component.req }} pytest==8.4.2
+      - run: pytest -q
+
+  agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -c "import app.main"
+
+  ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm ci
+      - run: npm run build
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up --build -d --wait
+      - name: Smoke test through the UI proxy
+        run: |
+          curl -fsS localhost:3000/api/health
+          curl -fsS -X POST localhost:3000/api/chat -H 'Content-Type: application/json' \
+            -d '{"messages":[{"role":"user","content":"Revenue by country"}]}' | grep -q revenue
+          curl -fsS "localhost:3000/api/lineage/column?dataset=gold.customer_360&column=revenue" | grep -q bronze
+      - if: failure()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down -v
