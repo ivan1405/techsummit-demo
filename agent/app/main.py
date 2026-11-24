@@ -80,7 +80,7 @@ async def chat(req: ChatRequest):
             log.exception("Agent failed")
             raise HTTPException(502, f"Agent error: {exc}") from exc
         log.warning("LLM call failed, answering in demo mode: %s", exc)
-        mode, note = "demo", f"> The LLM ({LLM_MODEL}) is unavailable, so this is a demo-mode answer: {str(exc)[:200]}\n\n"
+        mode, note = "demo", f"> The LLM ({LLM_MODEL}) is unavailable ({_failure(exc)}), so this is a demo-mode answer.\n\n"
         try:
             result = await get_demo_graph().ainvoke({"messages": history}, {"recursion_limit": 16})
         except Exception as demo_exc:
@@ -97,6 +97,12 @@ async def chat(req: ChatRequest):
     if isinstance(reply, list):
         reply = "".join(b.get("text", "") for b in reply if isinstance(b, dict))
     return {"reply": note + reply, "steps": steps, "mode": mode}
+
+
+def _failure(exc: Exception) -> str:
+    """Short, non-sensitive reason for an LLM failure (details go to the agent log only)."""
+    status = getattr(exc, "status_code", None)
+    return f"HTTP {status}" if status else type(exc).__name__
 
 
 def _preview(content, limit: int = 1500) -> str:

@@ -5,9 +5,13 @@ from langchain_core.messages import AIMessage
 from app import main
 
 
+class AuthError(Exception):
+    status_code = 401
+
+
 class Broken:
     async def ainvoke(self, *args, **kwargs):
-        raise RuntimeError("Error code: 401 - invalid x-api-key")
+        raise AuthError("Error code: 401 - invalid x-api-key, request req_secret")
 
 
 class Demo:
@@ -23,4 +27,5 @@ def test_chat_falls_back_to_demo_mode_when_the_llm_fails(monkeypatch):
     monkeypatch.setattr(main, "get_graph", broken_graph)
     monkeypatch.setattr(main, "get_demo_graph", lambda: Demo())
     res = asyncio.run(main.chat(main.ChatRequest(messages=[{"role": "user", "content": "Revenue by country"}])))
-    assert res["mode"] == "demo" and "invalid x-api-key" in res["reply"] and "Revenue by country" in res["reply"]
+    assert res["mode"] == "demo" and "HTTP 401" in res["reply"] and "Revenue by country" in res["reply"]
+    assert "req_secret" not in res["reply"]
