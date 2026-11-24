@@ -3,7 +3,11 @@
 Still goes through the MCP server, so the whole stack can be demoed without an API key.
 """
 
+import re
+
 from .mcp_tools import call
+
+COLUMN_REF = re.compile(r"\b((?:source|bronze|silver|gold)\.[a-z0-9_]+)\.([a-z0-9_]+)\b", re.I)
 
 HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fixed set of questions:
 
@@ -12,6 +16,7 @@ HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fi
 - *Top customers*
 - *What are customers complaining about?*
 - *Where does customer revenue come from?* (column lineage)
+- *How is gold.sales.amount calculated?* (any `layer.dataset.column`, or use **?** in the dictionary)
 - *Show the pipeline lineage*
 - *What data quality issues were found?*
 - *What changed since the last run?*
@@ -57,7 +62,34 @@ def md_table(columns: list[str], rows: list[list]) -> str:
     return "\n".join(lines)
 
 
+async def explain(dataset: str, column: str) -> str:
+    res = await call("explain_column", dataset=dataset, column=column)
+    if "error" in res:
+        return f"Error: {res['error']}"
+    ref = f"{dataset}.{column}"
+    out = [f"**`{ref}`** ({res['data_type']}): {res.get('description') or '_undocumented_'}",
+           f"Profile: {res['null_pct']}% nulls, {res['distinct_count']} distinct, e.g. {res['sample_values']}."]
+    if res["steps"]:
+        out.append("**How it is calculated**\n\n" + md_table(
+            ["column", "derived from", "transformation"],
+            [[f'{s["target_dataset"]}.{s["target_column"]}', f'{s["source_dataset"]}.{s["source_column"]}',
+              s["transformation"]] for s in res["steps"]]))
+    if res["origins"]:
+        out.append("Original source columns: " + ", ".join(f"`{o}`" for o in res["origins"]))
+    if res["downstream"]:
+        out.append("**Used by**: " + ", ".join(f'`{d["dataset"]}.{d["column"]}`' for d in res["downstream"]))
+    if res["quality"]:
+        out.append("**Data quality** (job " + ", ".join(res["built_by"]) + "): "
+                   + ", ".join(f'{q["rule"]} dropped {q["rows_affected"]}' for q in res["quality"]))
+    if c := res.get("contract"):
+        out.append(f"**Contract**: {c['status']} (owner {c['owner']}, {c['freshness']}, {c['failed']} failed check(s))")
+    out.append(f"Sources: `data_dictionary`, `lineage_columns` (run `{res['run_id'][:8]}`)")
+    return "\n\n".join(out)
+
+
 async def answer(question: str) -> str:
+    if m := COLUMN_REF.search(question):
+        return await explain(m.group(1).lower(), m.group(2).lower())
     q = question.lower()
     intent = next((name for words, name in KEYWORDS if any(w in q for w in words)), None)
 
