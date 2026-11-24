@@ -3,9 +3,11 @@
 Still goes through the MCP server, so the whole stack can be demoed without an API key.
 """
 
+import json
 import re
 
-from .mcp_tools import call
+from .charts import render_chart
+from .mcp_tools import call, calls
 
 COLUMN_REF = re.compile(r"\b((?:bronze|silver|gold)\.[a-z0-9_]+)\.([a-z0-9_]+)\b", re.I)
 
@@ -22,6 +24,7 @@ HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fi
 - *What changed since the last run?*
 - *Are there any alerts? Is any data late?*
 - *What tables are available?*
+- *Show me insights as charts*
 
 Set `LLM_PROVIDER` and an API key in `.env` to ask anything."""
 
@@ -41,6 +44,14 @@ QUERIES = {
                  "review_insights"),
 }
 
+# Chart drawn under each fixed answer: kind, label column, value column.
+CHARTS = {
+    "country": ("pie", "country", "revenue"),
+    "product": ("bar", "product_name", "revenue"),
+    "customer": ("bar", "full_name", "revenue"),
+    "complain": ("bar", "topic", "negative_reviews"),
+}
+
 KEYWORDS = [
     (("alert", "data late", "late data", "late source", "on time", "deliver"), "alerts"),
     (("changed", "last run", "previous run", "run history", "diff"), "changes"),
@@ -52,6 +63,7 @@ KEYWORDS = [
     (("country", "countries", "region"), "country"),
     (("product", "item", "best"), "product"),
     (("customer", "client"), "customer"),
+    (("chart", "graph", "plot", "pie", "visual", "image", "insight"), "insights"),
 ]
 
 
@@ -62,6 +74,46 @@ def md_table(columns: list[str], rows: list[list]) -> str:
     lines = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
     lines += ["| " + " | ".join(fmt(v) for v in row) + " |" for row in rows]
     return "\n".join(lines)
+
+
+def chart(kind: str, title: str, labels: list, values: list, value_label: str = "") -> None:
+    """Run render_chart like the LLM would, recorded as a tool call so the UI draws it."""
+    args = {"kind": kind, "title": title, "labels": labels, "values": values, "value_label": value_label}
+    result = json.loads(render_chart.invoke(args))
+    recorder = calls.get()
+    if recorder is not None:
+        recorder.append(("render_chart", args, result))
+
+
+def column_chart(res: dict, kind: str, title: str, label_col: str, value_col: str) -> None:
+    li, vi = res["columns"].index(label_col), res["columns"].index(value_col)
+    chart(kind, title, [r[li] for r in res["rows"]], [r[vi] for r in res["rows"]], value_col)
+
+
+async def insights() -> str:
+    country = await call("query", sql=QUERIES["country"][1])
+    daily = await call("query", sql="SELECT CAST(order_date AS VARCHAR) AS day, ROUND(SUM(revenue), 2) AS revenue "
+                                    "FROM daily_revenue GROUP BY order_date ORDER BY order_date")
+    topics = await call("query", sql=QUERIES["complain"][1])
+    for res in (country, daily, topics):
+        if "error" in res:
+            return f"Error: {res['error']}"
+    out = ["**Insights from the gold layer**"]
+    if country["rows"]:
+        column_chart(country, "pie", "Revenue share by country", "country", "revenue")
+        total = sum(r[2] for r in country["rows"]) or 1
+        top = country["rows"][0]
+        out.append(f"- **{top[0]}** brings {top[2] / total:.0%} of revenue ({top[2]:,.2f} of {total:,.2f}).")
+    if days := daily["rows"][-24:]:
+        chart("line", f"Daily revenue (last {len(days)} days)", [d[0] for d in days], [d[1] for d in days], "revenue")
+        peak = max(days, key=lambda d: d[1])
+        out.append(f"- Revenue went from {days[0][1]:,.2f} on {days[0][0]} to {days[-1][1]:,.2f} on {days[-1][0]}; "
+                   f"the best day was {peak[0]} ({peak[1]:,.2f}).")
+    if topics["rows"]:
+        column_chart(topics, "bar", "Negative reviews by topic", "topic", "negative_reviews")
+        out.append(f"- The top complaint is **{topics['rows'][0][0]}** ({topics['rows'][0][1]} negative reviews).")
+    out.append("Sources: `gold.daily_revenue`, `gold.review_insights`")
+    return "\n".join(out[:1]) + "\n\n" + "\n".join(out[1:-1]) + "\n\n" + out[-1]
 
 
 async def explain(dataset: str, column: str) -> str:
@@ -100,6 +152,9 @@ async def answer(question: str) -> str:
         res = await call("query", sql=sql)
         if "error" in res:
             return f"Error: {res['error']}"
+        if res["rows"] and intent in CHARTS:
+            kind, label_col, value_col = CHARTS[intent]
+            column_chart(res, kind, title, label_col, value_col)
         return f"**{title}**\n\n{md_table(res['columns'], res['rows'])}\n\nSources: `gold.{table}`\n\n```sql\n{sql}\n```"
 
     if intent == "column_lineage":
@@ -165,6 +220,9 @@ async def answer(question: str) -> str:
                                       [[c["dataset"], c["check"], c["base"], c["current"]] for c in res["contracts"]])
         return out + "\n\nOpen the **Run history** tab to compare any two runs.\n\nSources: `lineage_outputs`, " \
             "`data_dictionary`, `data_quality`, `contract_checks`"
+
+    if intent == "insights":
+        return await insights()
 
     if intent == "tables":
         res = await call("list_tables")

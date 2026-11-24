@@ -179,7 +179,7 @@ Set these in `.env`:
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Your key |
 | `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` | Gateway or proxy URL, when the key is not for the public API |
 
-With `LLM_PROVIDER=none` everything still runs: review enrichment uses keyword rules (rows are tagged `method=heuristic`), and the chatbot answers a fixed set of questions (revenue, products, customers, complaints, lineage, data quality) through the same MCP tools. If a configured LLM fails (bad key, gateway down), the chatbot answers in demo mode and says why, so the demo keeps working.
+With `LLM_PROVIDER=none` everything still runs: review enrichment uses keyword rules (rows are tagged `method=heuristic`), and the chatbot answers a fixed set of questions (revenue, products, customers, complaints, lineage, data quality, chart insights) through the same MCP tools. Answers can include charts: the agent calls `render_chart` (pie, donut, bar, line) and the chat draws them inline, with a PNG download. If a configured LLM fails (bad key, gateway down), the chatbot answers in demo mode and says why, so the demo keeps working.
 
 ## Local development
 
