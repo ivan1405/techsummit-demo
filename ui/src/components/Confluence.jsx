@@ -18,7 +18,7 @@ export default function ConfluencePicker({ value, schema, onChange, optional = f
     try {
       const found = (await api.confluenceSearch(query, label)).results;
       setResults(found);
-      if (!optional && !value && found.length === 1) pick(found[0]);
+      if (!optional && found.length && !found.some((p) => p.id === value)) pick(found[0]);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -37,7 +37,7 @@ export default function ConfluencePicker({ value, schema, onChange, optional = f
     api.confluencePage(value).then(setPage).catch((e) => setError(e.message));
   }, [value]);
 
-  const pick = (p) => onChange({ doc_page: p.id, doc_schema: 0, doc_title: p.title });
+  const pick = (p) => p.id !== value && onChange({ doc_page: p.id, doc_schema: 0, doc_title: p.title });
   const columns = page?.schemas[schema] || [];
 
   return (
