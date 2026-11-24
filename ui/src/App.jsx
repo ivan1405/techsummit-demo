@@ -16,6 +16,11 @@ export default function App() {
     history.replaceState(null, "", `#${id}`);
   };
   const [health, setHealth] = useState(null);
+  const [question, setQuestion] = useState(null);
+  const ask = (text) => {
+    setQuestion({ text, id: Date.now() });
+    setTab("chat");
+  };
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const toggleTheme = () => {
     const next = !dark;
@@ -62,9 +67,9 @@ export default function App() {
         </div>
       </header>
       <main>
-        {tab === "chat" && <Chat />}
-        {tab === "lineage" && <Lineage />}
-        {tab === "dictionary" && <Dictionary />}
+        <Chat question={question} hidden={tab !== "chat"} />
+        {tab === "lineage" && <Lineage onAsk={ask} />}
+        {tab === "dictionary" && <Dictionary onAsk={ask} />}
         {tab === "impact" && <Impact />}
         {tab === "quality" && <Quality />}
         {tab === "runs" && <Runs />}

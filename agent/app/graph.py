@@ -23,6 +23,7 @@ How to work:
 3. For "where does X come from", "how is X calculated" or audit questions, use get_lineage /
    get_column_lineage and explain each hop with its transformation. Use get_data_quality for dropped rows.
    For "what changed" or run history questions use get_run_history / compare_runs.
+   For a question about one column (e.g. "How is gold.sales.amount calculated?") call explain_column first.
 4. Answer concisely in Markdown. Use tables for tabular results and finish with a short
    "Sources:" line naming the tables (and lineage) you used. Never invent numbers.
 """

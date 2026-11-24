@@ -12,7 +12,10 @@ const SUGGESTIONS = [
   "What changed since the last run?",
 ];
 
-export default function Chat() {
+export const columnQuestion = (dataset, column) =>
+  `How is ${dataset}.${column} calculated and where does it come from?`;
+
+export default function Chat({ question, hidden }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,6 +24,13 @@ export default function Chat() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  const asked = useRef(null);
+  useEffect(() => {
+    if (!question || asked.current === question.id) return;
+    asked.current = question.id;
+    send(question.text);
+  }, [question]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send(text) {
     const content = text.trim();
@@ -40,7 +50,7 @@ export default function Chat() {
   }
 
   return (
-    <section className="chat">
+    <section className="chat" hidden={hidden}>
       <div className="messages">
         {messages.length === 0 && (
           <div className="empty">
