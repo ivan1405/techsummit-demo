@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 import AddSource, { RegisteredSources } from "./Sources.jsx";
+import { ContractBadge } from "./Contract.jsx";
 
 const LAYERS = ["all", "bronze", "silver", "gold"];
 
@@ -19,8 +20,14 @@ export default function Dictionary() {
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
+  const [contracts, setContracts] = useState({});
+
   useEffect(() => {
     api.dictionary().then(setData).catch((e) => setError(e.message));
+    api
+      .contracts()
+      .then((c) => setContracts(Object.fromEntries(c.datasets.map((d) => [d.dataset, d]))))
+      .catch(() => setContracts({}));
   }, [version]);
 
   const datasets = useMemo(() => {
@@ -87,6 +94,7 @@ export default function Dictionary() {
             <span className={`chip ${d.layer}`}>{d.layer}</span>
             <h3>{d.dataset}</h3>
             {d.rows != null && <span className="muted">{d.rows} rows</span>}
+            <ContractBadge contract={contracts[d.dataset]} />
           </header>
           {d.description && <p className="muted">{d.description}</p>}
           <div className="table-wrap">
