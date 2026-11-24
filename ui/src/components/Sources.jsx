@@ -189,16 +189,17 @@ export default function AddSource({ onClose, onImplemented }) {
           <>
             <p className="muted">Documented-only source: links are proposed and checked from the page's schema table, before any data exists.</p>
             <ConfluencePicker value={form.doc_page} schema={form.doc_schema}
-              onChange={(patch) => setForm({ ...form, ...patch, name: form.name || snake(patch.doc_title.replace(/\(.*\)/, "")).slice(0, 40) })} />
+              onChange={(patch) => setForm((f) => ({ ...f, ...patch, name: f.name || snake(patch.doc_title.replace(/\(.*\)/, "")).slice(0, 40) }))} />
           </>
         )}
         {form.kind !== "confluence" && (
           <details className="doc-attach" open={!!form.doc_page}>
             <summary>Attach Confluence documentation {form.doc_title ? `· ${form.doc_title}` : "(optional: descriptions and documented links)"}</summary>
-            <ConfluencePicker optional value={form.doc_page} schema={form.doc_schema} onChange={(patch) => setForm({ ...form, ...patch })} />
+            <ConfluencePicker optional value={form.doc_page} schema={form.doc_schema} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
           </details>
         )}
-        <button type="submit" className="primary" disabled={!!busy}>Profile source</button>
+        <button type="submit" className="primary" disabled={!!busy || (form.kind === "confluence" && !form.doc_page)}>Profile source</button>
+        {form.kind === "confluence" && !form.doc_page && <span className="muted"> Click a page above to select it.</span>}
         {form.kind === "file" && form.filename && <span className="muted"> {form.filename}</span>}
       </form>
 
