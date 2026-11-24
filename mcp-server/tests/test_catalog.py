@@ -80,3 +80,91 @@ def test_column_lineage_traces_to_origins(catalog):
 
 def test_data_quality(catalog):
     assert catalog.data_quality()["total_rows_dropped"] == 1
+
+
+@pytest.fixture
+def dict_catalog():
+    t = pa.Table.from_pylist
+    run = [{"run_id": RUN, "started_at": "2026-01-01T00:00:00"}]
+    cols = [  # (target_ds, target_col, source_ds, source_col)
+        ("silver.orders", "amount", "bronze.orders", "quantity"),
+        ("silver.orders", "amount", "bronze.orders", "unit_price"),
+        ("silver.orders", "quantity", "bronze.orders", "quantity"),
+        ("gold.sales", "amount", "silver.orders", "amount"),
+        ("gold.sales", "quantity", "silver.orders", "quantity"),
+        ("gold.daily", "revenue", "gold.sales", "amount"),
+    ]
+    edges = sorted({(s, d) for d, _, s, _ in cols} | {("source.orders.csv", "bronze.orders")})
+    dd = [
+        {"run_id": RUN, "dataset": "bronze.orders", "layer": "bronze", "column_name": c, "position": i,
+         "data_type": "str", "description": f"raw {c}", "null_pct": 0.0, "distinct_count": 3,
+         "sample_values": "1, 2", "upstream": f"source.orders.csv.{c}", "transformation": "landed as-is"}
+        for i, c in enumerate(["quantity", "unit_price"])
+    ] + [
+        {"run_id": RUN, "dataset": "gold.sales", "layer": "gold", "column_name": "amount", "position": 0,
+         "data_type": "float64", "description": "Order line amount in EUR.", "null_pct": 0.0,
+         "distinct_count": 9, "sample_values": "10.0", "upstream": "silver.orders.amount",
+         "transformation": "direct copy"},
+        {"run_id": RUN, "dataset": "gold.sales", "layer": "gold", "column_name": "_run_id", "position": 1,
+         "data_type": "str", "description": "run", "null_pct": 0.0, "distinct_count": 1, "sample_values": RUN,
+         "upstream": "", "transformation": ""},
+    ]
+    return Catalog.from_tables({
+        "lineage_runs": ("lineage", t(run)),
+        "lineage_edges": ("lineage", t([{"run_id": RUN, "job_name": f"job_{d}", "source_dataset": s,
+                                         "target_dataset": d} for s, d in edges])),
+        "lineage_jobs": ("lineage", t([{"run_id": RUN, "job_name": f"job_{d}", "layer": d.split(".")[0],
+                                        "description": f"builds {d}", "inputs": s, "outputs": d, "rows_in": 3,
+                                        "rows_out": 2, "rows_dropped": 0, "status": "COMPLETE",
+                                        "started_at": "x", "ended_at": "y"} for s, d in edges])),
+        "lineage_columns": ("lineage", t([{"run_id": RUN, "job_name": f"job_{d}", "target_dataset": d,
+                                           "target_column": c, "source_dataset": s, "source_column": sc,
+                                           "transformation": "x"} for d, c, s, sc in cols])),
+        "data_dictionary": ("lineage", t(dd)),
+    })
+
+
+def test_data_dictionary_groups_columns_and_searches(dict_catalog):
+    res = dict_catalog.data_dictionary()
+    sales = next(d for d in res["datasets"] if d["dataset"] == "gold.sales")
+    assert sales["rows"] == 2 and [c["column_name"] for c in sales["columns"]] == ["amount", "_run_id"]
+    found = dict_catalog.data_dictionary(search="EUR")["datasets"]
+    assert [(d["dataset"], [c["column_name"] for c in d["columns"]]) for d in found] == [("gold.sales", ["amount"])]
+    with pytest.raises(QueryError):
+        dict_catalog.data_dictionary(dataset="gold.nope")
+
+
+def _by_col(report):
+    return {(c["dataset"], c["column"]): c for c in report["columns"]}
+
+
+def test_impact_remove_column_breaks_and_impacts_downstream(dict_catalog):
+    rep = dict_catalog.impact_analysis([{"type": "remove_column", "dataset": "bronze.orders", "column": "quantity"}])
+    cols = _by_col(rep)
+    assert cols[("bronze.orders", "quantity")]["status"] == "removed"
+    assert cols[("silver.orders", "quantity")]["status"] == "broken"
+    assert cols[("gold.sales", "quantity")]["status"] == "broken"
+    assert cols[("silver.orders", "amount")]["status"] == "impacted"
+    assert cols[("gold.daily", "revenue")]["status"] == "impacted"
+    nodes = {n["id"]: n["status"] for n in rep["nodes"]}
+    assert nodes["gold.sales"] == "broken" and nodes["gold.daily"] == "impacted"
+    assert nodes["source.orders.csv"] == "unchanged"
+
+
+def test_impact_add_dataset_and_column_adds_nodes_and_edges(dict_catalog):
+    rep = dict_catalog.impact_analysis([
+        {"type": "add_column", "dataset": "gold.returns", "column": "returned_amount",
+         "sources": ["gold.sales.amount"], "transformation": "SUM where returned"},
+        {"type": "rename_column", "dataset": "silver.orders", "column": "quantity", "new_name": "units"},
+    ])
+    nodes = {n["id"]: n["status"] for n in rep["nodes"]}
+    assert nodes["gold.returns"] == "added"
+    assert {"source": "gold.sales", "target": "gold.returns", "status": "added"} in rep["edges"]
+    cols = _by_col(rep)
+    assert cols[("gold.sales", "quantity")]["reason"].startswith("update mapping")
+    assert rep["summary"]["added"] == 1 and rep["summary"]["renamed"] == 1
+
+
+def test_impact_rejects_unknown_columns(dict_catalog):
+    with pytest.raises(QueryError, match="Unknown column"):
+        dict_catalog.impact_analysis([{"type": "remove_column", "dataset": "gold.sales", "column": "nope"}])

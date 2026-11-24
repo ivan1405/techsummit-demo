@@ -11,6 +11,8 @@ import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from . import impact
+
 log = logging.getLogger(__name__)
 
 TABLE_DOCS = {
@@ -24,6 +26,7 @@ TABLE_DOCS = {
     "lineage_edges": "Lineage. Dataset-level edges (source_dataset -> target_dataset) per job and run.",
     "lineage_columns": "Lineage. Column-level lineage with the transformation applied, per run.",
     "data_quality": "Lineage. Rows dropped per data-quality rule, job and run.",
+    "data_dictionary": "Lineage. Data dictionary: description, type, profile and upstream of every column, per run.",
 }
 
 DEFAULT_MAX_ROWS = 200
@@ -227,6 +230,67 @@ class Catalog:
             "SELECT job_name, dataset, rule, rows_affected FROM data_quality WHERE run_id = ? "
             "ORDER BY rows_affected DESC", [run_id])
         return {"run_id": run_id, "rules": rules, "total_rows_dropped": sum(r["rows_affected"] for r in rules)}
+
+    # ---- data dictionary & what-if impact -----------------------------------------------
+
+    def data_dictionary(self, dataset: str | None = None, search: str | None = None,
+                        run_id: str | None = None) -> dict:
+        """Every dataset with its description, row count and documented columns."""
+        run_id = run_id or self._latest_run_id()
+        if "data_dictionary" not in self.tables:
+            raise QueryError("No data dictionary recorded yet. Re-run the pipeline.")
+        rows = self._rows(
+            "SELECT dataset, layer, column_name, data_type, description, null_pct, distinct_count, sample_values, "
+            "upstream, transformation FROM data_dictionary WHERE run_id = ? ORDER BY dataset, position", [run_id])
+        graph = self.lineage_graph(run_id=run_id)
+        rows_out = {n["id"]: n["rows"] for n in graph["nodes"]}
+        docs = {o: j["description"] for j in graph["jobs"] for o in j["outputs"].split(", ")}
+        needle = (search or "").strip().lower()
+        out: dict[str, dict] = {}
+        for r in rows:
+            if dataset and r["dataset"] != dataset:
+                continue
+            name = r["dataset"].split(".", 1)[1]
+            entry = out.setdefault(r["dataset"], {
+                "dataset": r["dataset"], "layer": r["layer"], "rows": rows_out.get(r["dataset"]),
+                "description": TABLE_DOCS.get(name) if r["layer"] == "gold" else docs.get(r["dataset"], ""),
+                "columns": [],
+            })
+            haystack = " ".join(str(r[k] or "") for k in ("dataset", "column_name", "description", "upstream"))
+            if not needle or needle in haystack.lower() or needle in (entry["description"] or "").lower():
+                entry["columns"].append({k: v for k, v in r.items() if k not in ("dataset", "layer")})
+        if dataset and not out:
+            raise QueryError(f"Unknown dataset '{dataset}'.")
+        datasets = [d for d in out.values() if d["columns"] or not needle]
+        return {"run_id": run_id, "datasets": datasets}
+
+    def impact_analysis(self, changes: list[dict], run_id: str | None = None) -> dict:
+        """Apply proposed lineage changes to the latest run's lineage without executing anything."""
+        run_id = run_id or self._latest_run_id()
+        columns: dict[str, list[str]] = {}
+        deps: dict[impact.Col, list[impact.Col]] = {}
+        for r in self._rows("SELECT target_dataset, target_column, source_dataset, source_column "
+                            "FROM lineage_columns WHERE run_id = ?", [run_id]):
+            deps.setdefault((r["target_dataset"], r["target_column"]), []).append(
+                (r["source_dataset"], r["source_column"]))
+        if "data_dictionary" in self.tables:
+            for r in self._rows("SELECT dataset, column_name, upstream FROM data_dictionary WHERE run_id = ? "
+                                "ORDER BY position", [run_id]):
+                if r["column_name"].startswith("_"):
+                    continue
+                columns.setdefault(r["dataset"], []).append(r["column_name"])
+                if r["dataset"].startswith("bronze.") and r["upstream"]:
+                    deps[(r["dataset"], r["column_name"])] = [impact.split_ref(u) for u in r["upstream"].split(", ")]
+        for col, srcs in deps.items():
+            for d, c in (col, *srcs):
+                if c not in columns.setdefault(d, []):
+                    columns[d].append(c)
+        edges = self.lineage_graph(run_id=run_id)["edges"]
+        try:
+            report = impact.analyze(columns, deps, edges, changes)
+        except impact.ChangeError as exc:
+            raise QueryError(str(exc)) from exc
+        return {"run_id": run_id, **report}
 
 
 def _reachable(edges: list[dict], start: str, upstream: bool) -> set[str]:
