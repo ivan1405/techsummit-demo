@@ -164,7 +164,7 @@ export default function Impact() {
           {report && <span className="muted">Run {report.run_id.slice(0, 8)} · click a dataset</span>}
         </div>
         {view && (
-          <svg width={view.width} height={view.height} role="img" aria-label="Proposed lineage graph">
+          <svg className="fit" viewBox={`0 0 ${view.width} ${view.height}`} width={view.width} role="img" aria-label="Proposed lineage graph">
             <defs>
               <marker id="impact-arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto">
                 <path d="M0,0 L10,5 L0,10 z" className="arrow" />

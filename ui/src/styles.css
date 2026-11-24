@@ -124,7 +124,8 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .dict-table td { vertical-align: top; color: var(--hub-copy); }
 .dict-table .samples { max-width: 220px; overflow-wrap: anywhere; }
 
-.impact { display: grid; grid-template-columns: 320px 1fr 340px; height: 100%; }
+.impact { display: grid; grid-template-columns: 300px 1fr 300px; height: 100%; }
+.graph svg.fit { max-width: 100%; height: auto; }
 .designer { border-right: 1px solid var(--hub-line); padding: 16px; overflow-y: auto; background: var(--hub-side-card); font-size: 13px; color: var(--hub-copy); }
 .designer h2 { font-size: 24px; margin: 0 0 6px; }
 .designer form { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
