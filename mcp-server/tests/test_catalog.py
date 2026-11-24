@@ -332,6 +332,22 @@ def test_reader_role_masks_pii_in_sql_samples_and_dictionary(pii_catalog):
     assert analyst[2]["sample_values"] == "ana@x.com"
 
 
+def test_tables_of_removed_sources_keep_their_last_pii_tags():
+    t = pa.Table.from_pylist
+    entry = {"layer": "gold", "position": 0, "data_type": "str", "description": "", "null_pct": 0.0,
+             "distinct_count": 1, "sample_values": "", "upstream": "", "transformation": "", "pii_origin": ""}
+    cat = Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": "r1", "started_at": "2026-01-01", "ended_at": "x", "status": "COMPLETE"},
+                                       {"run_id": "r2", "started_at": "2026-01-02", "ended_at": "x", "status": "COMPLETE"}])),
+        "data_dictionary": ("lineage", t([
+            {**entry, "run_id": "r1", "dataset": "gold.loyalty", "column_name": "email", "pii": "email"},
+            {**entry, "run_id": "r2", "dataset": "gold.sales", "column_name": "order_id", "pii": ""}])),
+        "loyalty": ("gold", t([{"email": "ana@x.com"}])),
+    })
+    assert cat.pii == {"loyalty": {"email": "email"}}
+    assert cat.query("SELECT email FROM loyalty")["rows"][0][0] != "ana@x.com"
+
+
 def test_role_from_headers_requires_the_analyst_token(monkeypatch):
     from datalake_mcp import server
     monkeypatch.setattr(server, "ANALYST_TOKEN", "s3cret")

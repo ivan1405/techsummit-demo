@@ -125,13 +125,18 @@ class Catalog:
 
     @staticmethod
     def _pii(con: duckdb.DuckDBPyConnection, tables: dict) -> dict[str, dict[str, str]]:
-        """{table: {column: pii tag}} for the lake tables, from the latest run's data dictionary."""
+        """{table: {column: pii tag}} for the lake tables, from each dataset's most recent dictionary entry (a removed
+        source keeps its last tags, as its tables stay in the lake)."""
         if "data_dictionary" not in tables or "lineage_runs" not in tables \
                 or "pii" not in _columns(con, "data_dictionary"):
             return {}
         rows = con.execute(
-            "SELECT dataset, column_name, pii FROM data_dictionary WHERE coalesce(pii, '') <> '' AND run_id = "
-            "(SELECT run_id FROM lineage_runs ORDER BY started_at DESC LIMIT 1)").fetchall()
+            "SELECT dataset, column_name, pii FROM ("
+            "  SELECT d.dataset, d.column_name, d.pii,"
+            "         rank() OVER (PARTITION BY d.dataset ORDER BY r.started_at DESC) AS recency"
+            "  FROM data_dictionary d JOIN lineage_runs r USING (run_id)"
+            "  WHERE d.pii IS NOT NULL"
+            ") WHERE recency = 1 AND pii <> ''").fetchall()
         out: dict[str, dict[str, str]] = {}
         for dataset, column, tag in rows:
             layer, name = dataset.split(".", 1)
