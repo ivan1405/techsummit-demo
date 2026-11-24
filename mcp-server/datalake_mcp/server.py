@@ -132,6 +132,12 @@ def stage_source(kind: str, name: str, filename: str = "", content: str = "", ur
 
 
 @mcp.tool()
+def get_staged_source(name: str) -> str:
+    """Profile and sample rows of a staged source."""
+    return _safe(lambda: {k: v for k, v in staged.get(name).items() if k != "table"})
+
+
+@mcp.tool()
 def suggest_source_links(name: str) -> str:
     """Suggest how each column of a staged source links to existing silver/gold columns
     (join_key, maps_to or new), using name similarity and real value overlap."""
