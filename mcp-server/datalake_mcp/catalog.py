@@ -213,7 +213,7 @@ class Catalog:
     def describe_table(self, table: str, role: str = READER) -> dict:
         if table not in self.tables and (self.refresh() or table not in self.tables):
             raise QueryError(f"Unknown table '{table}'. Use list_tables to see available tables.")
-        cols = self.con.execute(f'DESCRIBE "{table}"').fetchall()
+        cols = self._con_for(role).execute(f'DESCRIBE "{table}"').fetchall()
         sample = self.query(f'SELECT * FROM "{table}" LIMIT 5', role=role)
         return {
             "table": table,
