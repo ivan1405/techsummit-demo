@@ -95,6 +95,26 @@ async def quality():
     return await _tool("get_data_quality")
 
 
+@app.get("/api/dictionary")
+async def dictionary(dataset: str = "", search: str = ""):
+    return await _tool("get_data_dictionary", dataset=dataset, search=search)
+
+
+class ImpactRequest(BaseModel):
+    changes: list[dict]
+
+
+@app.post("/api/impact")
+async def impact(req: ImpactRequest):
+    try:
+        res = await mcp_tools.call("analyze_change_impact", changes=req.changes)
+    except Exception as exc:
+        raise HTTPException(502, f"MCP error: {exc}") from exc
+    if isinstance(res, dict) and "error" in res:
+        raise HTTPException(400, res["error"])
+    return res
+
+
 @app.get("/api/tables")
 async def tables():
     return await _tool("list_tables")
