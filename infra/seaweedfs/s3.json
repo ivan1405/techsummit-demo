@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "lakeadmin",
+      "credentials": [{ "accessKey": "lakeadmin", "secretKey": "lakeadmin-secret" }],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    },
+    {
+      "name": "lakereader",
+      "credentials": [{ "accessKey": "lakereader", "secretKey": "lakereader-secret" }],
+      "actions": ["Read", "List"]
+    }
+  ]
+}
