@@ -207,3 +207,63 @@ def test_contracts_combine_checks_and_freshness():
     assert (by["gold.a"]["status"], by["gold.a"]["freshness"]) == ("green", "fresh")
     assert (by["gold.b"]["status"], by["gold.b"]["freshness"]) == ("amber", "stale")
     assert by["gold.c"]["status"] == "red" and by["gold.c"]["failed"] == 1 and by["gold.a"]["age_minutes"] == 30.0
+
+
+@pytest.fixture
+def runs_catalog():
+    t = pa.Table.from_pylist
+    r1, r2 = "run-a", "run-b"
+    outputs = [(r1, "silver.orders", 10), (r1, "gold.sales", 8), (r1, "gold.old", 3),
+               (r2, "silver.orders", 12), (r2, "gold.sales", 8), (r2, "gold.loyalty", 5)]
+    dd = [(r1, "gold.sales", "amount", "float64"), (r1, "gold.sales", "note", "str"),
+          (r2, "gold.sales", "amount", "str"), (r2, "gold.sales", "tier", "str"), (r2, "gold.sales", "_run_id", "str")]
+    return Catalog.from_tables({
+        "lineage_runs": ("lineage", t([
+            {"run_id": r1, "started_at": "2026-01-01T10:00:00+00:00", "ended_at": "2026-01-01T10:00:04+00:00",
+             "status": "COMPLETE", "jobs": 3},
+            {"run_id": r2, "started_at": "2026-01-01T11:00:00+00:00", "ended_at": "2026-01-01T11:00:06+00:00",
+             "status": "COMPLETE", "jobs": 3}])),
+        "lineage_outputs": ("lineage", t([{"run_id": r, "job_name": f"job_{d}", "dataset": d, "rows": n, "columns": 2}
+                                          for r, d, n in outputs])),
+        "data_dictionary": ("lineage", t([{"run_id": r, "dataset": d, "column_name": c, "data_type": ty, "position": i}
+                                          for i, (r, d, c, ty) in enumerate(dd)])),
+        "data_quality": ("lineage", t([
+            {"run_id": r1, "job_name": "silver_orders", "dataset": "bronze.orders", "rule": "dup", "rows_affected": 1},
+            {"run_id": r2, "job_name": "silver_orders", "dataset": "bronze.orders", "rule": "dup", "rows_affected": 4}])),
+        "contract_checks": ("lineage", t([
+            {"run_id": r1, "dataset": "gold.sales", "owner": "o", "check": "schema", "expectation": "", "observed": "",
+             "status": "pass", "max_age_minutes": 60},
+            {"run_id": r2, "dataset": "gold.sales", "owner": "o", "check": "schema", "expectation": "", "observed": "",
+             "status": "fail", "max_age_minutes": 60}])),
+    })
+
+
+def test_run_diff_defaults_to_latest_vs_previous(runs_catalog):
+    res = runs_catalog.run_diff()
+    assert (res["run"]["run_id"], res["base"]["run_id"]) == ("run-b", "run-a")
+    by = {d["dataset"]: d for d in res["datasets"]}
+    assert by["gold.loyalty"]["status"] == "added" and by["gold.old"]["status"] == "removed"
+    assert (by["silver.orders"]["rows_delta"], by["silver.orders"]["rows_pct"]) == (2, 20.0)
+    sales = by["gold.sales"]
+    assert sales["status"] == "changed" and sales["columns_added"] == ["tier"] and sales["columns_removed"] == ["note"]
+    assert sales["type_changes"] == [{"column": "amount", "from": "float64", "to": "str"}]
+    assert res["quality"] == [{"job_name": "silver_orders", "rule": "dup", "base": 1, "current": 4, "delta": 3}]
+    assert res["contracts"] == [{"dataset": "gold.sales", "check": "schema", "base": "pass", "current": "fail"}]
+    assert res["summary"] == {"datasets_added": 1, "datasets_removed": 1, "row_changes": 1, "schema_changes": 3,
+                              "quality_changes": 1, "contract_changes": 1}
+    assert [d["layer"] for d in res["datasets"]] == ["silver", "gold", "gold", "gold"]
+
+
+def test_run_history_newest_first_with_changes(runs_catalog):
+    res = runs_catalog.run_history()
+    latest, first = res["runs"]
+    assert res["total_runs"] == 2 and latest["run_id"] == "run-b" and latest["base_run_id"] == "run-a"
+    assert (latest["gold_rows"], latest["rows_dropped"], latest["contract_failures"], latest["duration_s"]) == (13, 4, 1, 6.0)
+    assert latest["changes"]["datasets_added"] == 1 and first["changes"] is None
+
+
+def test_run_diff_errors(runs_catalog):
+    with pytest.raises(QueryError, match="first run"):
+        runs_catalog.run_diff("run-a")
+    with pytest.raises(QueryError, match="Unknown run"):
+        runs_catalog.run_diff("nope")
