@@ -89,9 +89,9 @@ def _check_source(source: str) -> None:
 
 
 def delay(lake: Lake, source: str, minutes: int | None = None) -> list[dict]:
-    """Simulate a late delivery: the source's last delivery moves back past its SLA (default: twice the SLA)."""
+    """Simulate a late delivery: the source's last delivery moves back past its SLA (default: three times the SLA)."""
     _check_source(source)
-    minutes = int(minutes or 2 * SOURCE_SLAS[source])
+    minutes = int(minutes or 3 * SOURCE_SLAS[source])
     if not 1 <= minutes <= 7 * 24 * 60:
         raise OpsError("minutes must be between 1 and 10080.")
     late = _read(lake, LATE_KEY, {})
