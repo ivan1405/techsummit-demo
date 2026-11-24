@@ -67,7 +67,7 @@ export default function App() {
         </div>
       </header>
       <main>
-        {tab === "chat" && <Chat question={question} />}
+        <Chat question={question} hidden={tab !== "chat"} />
         {tab === "lineage" && <Lineage onAsk={ask} />}
         {tab === "dictionary" && <Dictionary onAsk={ask} />}
         {tab === "impact" && <Impact />}

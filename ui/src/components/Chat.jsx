@@ -15,7 +15,7 @@ const SUGGESTIONS = [
 export const columnQuestion = (dataset, column) =>
   `How is ${dataset}.${column} calculated and where does it come from?`;
 
-export default function Chat({ question }) {
+export default function Chat({ question, hidden }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export default function Chat({ question }) {
   }
 
   return (
-    <section className="chat">
+    <section className="chat" hidden={hidden}>
       <div className="messages">
         {messages.length === 0 && (
           <div className="empty">
