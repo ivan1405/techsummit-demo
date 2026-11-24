@@ -230,7 +230,7 @@ async def suggest_links(req: LinksRequest):
     suggestion = await _checked("suggest_source_links", name=req.name)
     profile = await _checked("get_staged_source", name=req.name)
     links, mode = await linker.review(profile, suggestion)
-    return {"links": links, "mode": mode, "targets": suggestion["targets"]}
+    return {"links": links, "mode": mode, "targets": suggestion["targets"], "docs": suggestion.get("docs") or {}}
 
 
 @app.post("/api/sources/validate")

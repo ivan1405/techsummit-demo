@@ -33,7 +33,6 @@ def build(source: dict, links: list[dict], validation: dict, contracts: list[dic
                           "message": c.get("message", "")})
     join_cols = {lk["source_column"] for lk in joins}
     impact = validation["impact"]
-    feed_cols = next((n["columns"] for n in impact["nodes"] if n["id"] == feed), [])
     added = sorted(c["column"] for c in impact["columns"] if c["dataset"] == feed and c["status"] == "added")
 
     if existing:
@@ -47,8 +46,10 @@ def build(source: dict, links: list[dict], validation: dict, contracts: list[dic
         targets = list(dict.fromkeys(lk["target"].rsplit(".", 1)[0] for lk in joins))
         how = (f"silver.{name} LEFT JOIN " + ", ".join(targets)) if targets else f"Copy of silver.{name}"
         gold = {"dataset": feed, "action": "create", "how": how + ".", "expected_rows": f"about {rows}"}
-        contract = {"dataset": feed, "action": "create", **DEFAULT_CONTRACT,
-                    "columns": feed_cols or cols, "rules": ["Row count within range.", "Schema matches columns."]}
+        rules = ["Row count within range.", "Schema matches the built columns."]
+        if targets:
+            rules.append(f"Columns joined from {', '.join(targets)} are part of the schema.")
+        contract = {"dataset": feed, "action": "create", **DEFAULT_CONTRACT, "columns": cols, "rules": rules}
 
     quality = [{"rule": "duplicate_row", "layer": f"silver.{name}", "action": "drop exact duplicate rows"}]
     if join_cols:

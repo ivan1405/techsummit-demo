@@ -23,7 +23,8 @@ def test_new_feed_plan():
     assert [x["dataset"] for x in p["layers"]] == ["bronze.tickets", "silver.tickets", "gold.tickets"]
     assert p["layers"][2]["how"] == "silver.tickets LEFT JOIN silver.customers."
     assert p["joins"][0]["expected_matches"] == 114
-    assert p["contract"]["owner"] == "Onboarded source" and p["contract"]["columns"] == ["priority", "ticket_no"]
+    assert p["contract"]["owner"] == "Onboarded source" and p["contract"]["columns"] == ["ticket_no", "cust", "priority"]
+    assert p["contract"]["rules"][-1] == "Columns joined from silver.customers are part of the schema."
     assert [q["rule"] for q in p["quality"]] == ["duplicate_row", "null_join_keys", "typing"]
     assert p["mappings"][2]["description"] == "Agent-set urgency"
     assert p["impact"]["datasets"] == ["gold.tickets"]
