@@ -60,6 +60,9 @@ th, td { border-bottom: 1px solid var(--hub-line); padding: 6px 12px; text-align
 th { color: var(--hub-muted); font-weight: 500; font-size: 12px; background: var(--hub-field); }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .steps { margin-top: 8px; font-size: 12px; }
+.chart { margin: 10px 0; max-width: 600px; border: 1px solid var(--hub-line); border-radius: 10px; overflow: hidden; background: #ffffff; }
+.chart svg { display: block; }
+.chart figcaption { padding: 4px 12px 8px; text-align: right; font-size: 12px; background: #ffffff; }
 .steps summary { color: var(--hub-muted); cursor: pointer; }
 .step { margin-top: 8px; }
 .step .tool { color: var(--hub-red-strong); }

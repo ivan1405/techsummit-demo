@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "../api.js";
+import Chart from "./Chart.jsx";
 
 const SUGGESTIONS = [
   "Revenue by country",
@@ -10,6 +11,7 @@ const SUGGESTIONS = [
   "Where does customer revenue come from?",
   "What data quality issues were found?",
   "What changed since the last run?",
+  "Show me insights as charts",
 ];
 
 export const columnQuestion = (dataset, column) =>
@@ -41,7 +43,7 @@ export default function Chat({ question, hidden }) {
     setLoading(true);
     try {
       const res = await api.chat(history.map(({ role, content }) => ({ role, content })));
-      setMessages([...history, { role: "assistant", content: res.reply, steps: res.steps }]);
+      setMessages([...history, { role: "assistant", content: res.reply, steps: res.steps, charts: res.charts }]);
     } catch (err) {
       setMessages([...history, { role: "assistant", content: `**Error:** ${err.message}`, error: true }]);
     } finally {
@@ -70,6 +72,7 @@ export default function Chat({ question, hidden }) {
           <div key={i} className={`msg ${m.role} ${m.error ? "error" : ""}`}>
             <div className="bubble">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+              {m.charts?.map((c, j) => <Chart key={j} spec={c} />)}
               {m.steps?.length > 0 && (
                 <details className="steps">
                   <summary>{m.steps.length} MCP tool call(s)</summary>
