@@ -41,8 +41,8 @@ def get_llm():
     return None
 
 
-def build_graph(tools: list):
-    llm = get_llm()
+def build_graph(tools: list, demo_mode: bool = False):
+    llm = None if demo_mode else get_llm()
     graph = StateGraph(MessagesState)
 
     if llm is None:

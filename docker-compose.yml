@@ -6,6 +6,9 @@ x-llm-env: &llm-env
   LLM_TEMPERATURE: ${LLM_TEMPERATURE:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  # Gateways / proxies (read by the OpenAI and Anthropic SDKs); unset = the public API.
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+  ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
 
 services:
   seaweedfs:
