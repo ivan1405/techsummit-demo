@@ -94,3 +94,13 @@ def test_clean_keeps_rows_with_at_least_one_join_key():
 
 def test_public_masks_database_password():
     assert onboarded.public({"url": "postgresql://reader:secret@db:5432/erp"})["url"] == "postgresql://reader:***@db:5432/erp"
+
+
+def test_documented_descriptions_reach_the_dictionary():
+    spec = {"name": "t", "kind": "json", "links": [
+        {"source_column": "a", "relation": "new", "description": "Agent-set urgency."},
+        {"source_column": "b", "relation": "maps_to", "target": "silver.customers.country"}]}
+    assert onboarded.descriptions(spec, ["a", "b"]) == {
+        "a": "Agent-set urgency. From onboarded source t.json: new attribute.",
+        "b": "From onboarded source t.json: same meaning as silver.customers.country."}
+    assert onboarded.check_spec({**spec, "plan_id": "abc"})["plan_id"] == "abc"
