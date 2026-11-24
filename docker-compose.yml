@@ -66,7 +66,7 @@ services:
       S3_ACCESS_KEY: lakereader
       S3_SECRET_KEY: lakereader-secret
       # Unmasked PII only for callers presenting this token with X-Data-Role: analyst (the agent).
-      MCP_ANALYST_TOKEN: ${MCP_ANALYST_TOKEN:-analyst-demo-token}
+      MCP_ANALYST_TOKEN: ${MCP_ANALYST_TOKEN-analyst-demo-token}
     ports:
       - "8000:8000"
     depends_on:
@@ -85,7 +85,7 @@ services:
     environment:
       <<: *llm-env
       MCP_URL: http://mcp-server:8000/mcp
-      MCP_ANALYST_TOKEN: ${MCP_ANALYST_TOKEN:-analyst-demo-token}
+      MCP_ANALYST_TOKEN: ${MCP_ANALYST_TOKEN-analyst-demo-token}
       PIPELINE_URL: http://pipeline-api:8090
       # Defaults to the bundled mock; set CONFLUENCE_URL (+ email and API token) in .env for a real Cloud site.
       CONFLUENCE_URL: ${CONFLUENCE_URL:-http://confluence-mock:8095}
