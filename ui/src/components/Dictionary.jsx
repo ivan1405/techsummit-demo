@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
-import AddSource from "./Sources.jsx";
+import AddSource, { RegisteredSources } from "./Sources.jsx";
 
 const LAYERS = ["all", "bronze", "silver", "gold"];
 
@@ -16,9 +16,12 @@ export default function Dictionary() {
   const [showMeta, setShowMeta] = useState(false);
   const [adding, setAdding] = useState(false);
 
+  const [version, setVersion] = useState(0);
+  const reload = () => setVersion((v) => v + 1);
+
   useEffect(() => {
     api.dictionary().then(setData).catch((e) => setError(e.message));
-  }, []);
+  }, [version]);
 
   const datasets = useMemo(() => {
     if (!data) return [];
@@ -73,7 +76,8 @@ export default function Dictionary() {
           + Add data source
         </button>
       </div>
-      {adding && <AddSource onClose={() => setAdding(false)} />}
+      <RegisteredSources version={version} onChange={reload} />
+      {adding && <AddSource onClose={() => setAdding(false)} onImplemented={reload} />}
       <p className="muted" aria-live="polite">
         {datasets.length} tables · {total} columns
       </p>

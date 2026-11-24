@@ -24,6 +24,9 @@ export const api = {
   stageSource: (source) => post("/api/sources", source),
   suggestLinks: (name) => post("/api/sources/suggest", { name }),
   validateLinks: (name, links, feed) => post("/api/sources/validate", { name, links, feed }),
+  acceptSource: (source) => post("/api/sources/accept", source),
+  registeredSources: () => request("/api/sources/registered"),
+  removeSource: (name) => request(`/api/sources/registered/${encodeURIComponent(name)}`, { method: "DELETE" }),
   impact: (changes) =>
     request("/api/impact", {
       method: "POST",
