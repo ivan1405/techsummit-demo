@@ -3,6 +3,7 @@
 import io
 
 import boto3
+from botocore.config import Config
 import pandas as pd
 from botocore.exceptions import ClientError
 
@@ -18,6 +19,7 @@ class Lake:
             aws_access_key_id=settings.s3_access_key,
             aws_secret_access_key=settings.s3_secret_key,
             region_name="us-east-1",
+            config=Config(retries={"max_attempts": 8, "mode": "standard"}),
         )
 
     def ensure_buckets(self) -> None:
