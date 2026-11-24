@@ -159,6 +159,7 @@ class Catalog:
     # ---- lineage -----------------------------------------------------------------------
 
     def _latest_run_id(self) -> str:
+        self.refresh()
         if "lineage_runs" not in self.tables:
             raise QueryError("No lineage recorded yet. Run the pipeline first.")
         return self.con.execute("SELECT run_id FROM lineage_runs ORDER BY started_at DESC LIMIT 1").fetchone()[0]
@@ -186,8 +187,13 @@ class Catalog:
         for j in jobs:
             for out in filter(None, j["outputs"].split(", ")):
                 rows_out[out] = j["rows_out"]
+        cols: dict[str, list[str]] = {}
+        for r in self._rows("SELECT DISTINCT target_dataset, target_column FROM lineage_columns WHERE run_id = ? "
+                            "ORDER BY target_dataset, target_column", [run_id]):
+            cols.setdefault(r["target_dataset"], []).append(r["target_column"])
         names = sorted({e["source"] for e in edges} | {e["target"] for e in edges} | ({dataset} if dataset else set()))
-        nodes = [{"id": n, "layer": n.split(".", 1)[0], "name": n.split(".", 1)[1], "rows": rows_out.get(n)}
+        nodes = [{"id": n, "layer": n.split(".", 1)[0], "name": n.split(".", 1)[1], "rows": rows_out.get(n),
+                  "columns": cols.get(n, [])}
                  for n in names]
         return {"run_id": run_id, "nodes": nodes, "edges": edges, "jobs": jobs}
 
