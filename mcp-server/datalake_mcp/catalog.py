@@ -279,6 +279,10 @@ class Catalog:
             steps, origins = upstream["steps"], upstream["origins"]
         except QueryError:
             steps, origins = [], [entry["upstream"]] if entry.get("upstream") else []
+        raw = {r["ref"]: r["upstream"] for r in self._rows(
+            "SELECT dataset || '.' || column_name AS ref, upstream FROM data_dictionary "
+            "WHERE run_id = ? AND layer = 'bronze' AND coalesce(upstream, '') <> ''", [run_id])}
+        origins = list(dict.fromkeys(raw.get(o, o) for o in origins))
         edges = self._rows("SELECT DISTINCT source_dataset, source_column, target_dataset, target_column, "
                            "transformation FROM lineage_columns WHERE run_id = ?", [run_id])
         downstream, frontier, seen = [], [(dataset, column)], set()

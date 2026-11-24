@@ -275,6 +275,7 @@ def test_explain_column_combines_dictionary_upstream_and_downstream(dict_catalog
     assert {s["source_column"] for s in res["steps"]} >= {"quantity", "unit_price"}
     assert res["downstream"] == [{"dataset": "gold.daily", "column": "revenue", "from": "gold.sales.amount",
                                   "transformation": "x"}]
+    assert "source.orders.csv.quantity" in res["origins"]
     assert res["built_by"] == ["job_gold.sales"] and res["contract"] is None
 
 
