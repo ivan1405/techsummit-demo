@@ -1,6 +1,7 @@
 """MCP client: loads the data lake tools exposed by the MCP server."""
 
 import asyncio
+import contextvars
 import json
 import logging
 
@@ -14,6 +15,7 @@ log = logging.getLogger(__name__)
 _client = MultiServerMCPClient({"datalake": {"url": MCP_URL, "transport": "streamable_http"}})
 _tools: dict[str, BaseTool] = {}
 _lock = asyncio.Lock()
+calls: contextvars.ContextVar[list | None] = contextvars.ContextVar("mcp_calls", default=None)
 
 
 async def get_tools(retries: int = 10, delay: float = 2.0) -> dict[str, BaseTool]:
@@ -44,5 +46,10 @@ def parse_result(result) -> dict | list | str:
 
 
 async def call(name: str, **args) -> dict | list | str:
+    """Call an MCP tool directly; recorded in `calls` when a recorder list is set."""
     tools = await get_tools()
-    return parse_result(await tools[name].ainvoke(args))
+    result = parse_result(await tools[name].ainvoke(args))
+    recorder = calls.get()
+    if recorder is not None:
+        recorder.append((name, args, result))
+    return result
