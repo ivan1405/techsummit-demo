@@ -104,3 +104,17 @@ def test_documented_descriptions_reach_the_dictionary():
         "a": "Agent-set urgency. From onboarded source t.json: new attribute.",
         "b": "From onboarded source t.json: same meaning as silver.customers.country."}
     assert onboarded.check_spec({**spec, "plan_id": "abc"})["plan_id"] == "abc"
+
+
+def test_onboarded_source_can_join_another_onboarded_silver_dataset(lake):
+    run(lake.settings, lake)
+    onboarded.register(lake, RETURNS, (ROOT / "samples" / "returns.csv").read_text())
+    summary = run(lake.settings, lake)
+    first = lake.read_parquet("silver", "returns")["return_id"].iloc[0]
+    notes = {"name": "return_notes", "kind": "file", "filename": "return_notes.csv", "feed": "gold.return_notes",
+             "links": [{"source_column": "return_id", "relation": "join_key", "target": "silver.returns.return_id"}]}
+    onboarded.register(lake, notes, f"return_id,note\n{first},damaged box\n")
+    summary = run(lake.settings, lake)
+    assert summary["onboarding_errors"] == {}
+    out = lake.read_parquet("gold", "return_notes")
+    assert len(out) == 1 and {"note", "reason"} <= set(out.columns)
