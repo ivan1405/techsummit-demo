@@ -9,8 +9,11 @@ function ConnectionForm({ onSaved }) {
   const [error, setError] = useState(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  async function save(e) {
-    e.preventDefault();
+  async function save() {
+    if (!/^[a-z][a-z0-9_-]{0,40}$/.test(form.name) || !form.url.trim()) {
+      setError("Enter a lowercase name (letters, digits, - or _) and a connection string.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -25,22 +28,22 @@ function ConnectionForm({ onSaved }) {
   }
 
   return (
-    <form className="fields conn-form" onSubmit={save} aria-label="New connection">
+    <div className="fields conn-form" role="group" aria-label="New connection">
       <label>
         Name
-        <input name="conn_name" value={form.name} onChange={set("name")} placeholder="erp-replica" required pattern="[a-z][a-z0-9_\-]*" />
+        <input name="conn_name" value={form.name} onChange={set("name")} placeholder="erp-replica" />
       </label>
       <label className="wide">
         Connection string
-        <input name="conn_url" value={form.url} onChange={set("url")} placeholder={URL_HINT} required />
+        <input name="conn_url" value={form.url} onChange={set("url")} placeholder={URL_HINT} />
       </label>
       <label>
         Description
         <input name="conn_description" value={form.description} onChange={set("description")} placeholder="Read replica of the ERP" />
       </label>
-      <button type="submit" className="primary" disabled={busy}>{busy ? "Testing…" : "Test & save"}</button>
+      <button type="button" className="primary" disabled={busy} onClick={save}>{busy ? "Testing…" : "Test & save"}</button>
       {error && <p className="error-text" role="alert">{error}</p>}
-    </form>
+    </div>
   );
 }
 
