@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
+import { columnQuestion } from "./Chat.jsx";
 
 export const NODE_W = 165;
 export const NODE_H = 44;
@@ -33,7 +34,7 @@ export function layout(nodes, edges) {
   return { positions, width, height: height + 20 };
 }
 
-export default function Lineage() {
+export default function Lineage({ onAsk }) {
   const [graph, setGraph] = useState(null);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -163,6 +164,9 @@ export default function Lineage() {
                 <p>
                   <strong>Origin:</strong> {trace.origins.join(", ")}
                 </p>
+                <button className="primary" onClick={() => onAsk(columnQuestion(trace.dataset, trace.column))}>
+                  Ask about this column
+                </button>
               </div>
             )}
           </>

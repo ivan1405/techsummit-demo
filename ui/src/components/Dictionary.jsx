@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
+import { columnQuestion } from "./Chat.jsx";
 import AddSource, { RegisteredSources } from "./Sources.jsx";
 import { ContractBadge } from "./Contract.jsx";
 
@@ -9,7 +10,7 @@ function matches(text, needle) {
   return (text || "").toLowerCase().includes(needle);
 }
 
-export default function Dictionary() {
+export default function Dictionary({ onAsk }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -113,7 +114,12 @@ export default function Dictionary() {
               <tbody>
                 {d.columns.map((c) => (
                   <tr key={c.column_name}>
-                    <td><code>{c.column_name}</code></td>
+                    <td className="col-name">
+                      <code>{c.column_name}</code>
+                      <button className="ask" title="Ask the assistant about this column"
+                              aria-label={`Ask about ${d.dataset}.${c.column_name}`}
+                              onClick={() => onAsk(columnQuestion(d.dataset, c.column_name))}>?</button>
+                    </td>
                     <td className="muted">{c.data_type}</td>
                     <td>{c.description || <span className="muted">Undocumented</span>}</td>
                     <td className="num">{c.null_pct}%</td>
