@@ -1,0 +1,98 @@
+"""Keyword-routed answers used when no LLM is configured (LLM_PROVIDER=none).
+
+Still goes through the MCP server, so the whole stack can be demoed without an API key.
+"""
+
+from .mcp_tools import call
+
+HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fixed set of questions:
+
+- *Revenue by country*
+- *Top products*
+- *Top customers*
+- *What are customers complaining about?*
+- *Where does customer revenue come from?* (column lineage)
+- *Show the pipeline lineage*
+- *What data quality issues were found?*
+- *What tables are available?*
+
+Set `LLM_PROVIDER` and an API key in `.env` to ask anything."""
+
+QUERIES = {
+    "country": ("Revenue by country (completed orders)",
+                "SELECT country, SUM(orders) AS orders, ROUND(SUM(revenue), 2) AS revenue "
+                "FROM daily_revenue GROUP BY country ORDER BY revenue DESC", "daily_revenue"),
+    "product": ("Top products by revenue",
+                "SELECT product_name, category, units_sold, revenue, avg_rating, return_rate, top_complaint "
+                "FROM product_performance ORDER BY revenue DESC LIMIT 8", "product_performance"),
+    "customer": ("Top 10 customers by revenue",
+                 "SELECT full_name, country, segment, orders, revenue, avg_rating "
+                 "FROM customer_360 ORDER BY revenue DESC LIMIT 10", "customer_360"),
+    "complain": ("Negative reviews by topic",
+                 "SELECT topic, COUNT(*) AS negative_reviews, ROUND(AVG(rating), 2) AS avg_rating "
+                 "FROM review_insights WHERE sentiment = 'negative' GROUP BY topic ORDER BY negative_reviews DESC",
+                 "review_insights"),
+}
+
+KEYWORDS = [
+    (("come from", "origin", "calculated", "column lineage"), "column_lineage"),
+    (("lineage", "pipeline", "flow"), "lineage"),
+    (("quality", "dropped", "invalid", "clean"), "quality"),
+    (("table", "dataset", "available"), "tables"),
+    (("complain", "sentiment", "negative", "review"), "complain"),
+    (("country", "countries", "region"), "country"),
+    (("product", "item", "best"), "product"),
+    (("customer", "client"), "customer"),
+]
+
+
+def md_table(columns: list[str], rows: list[list]) -> str:
+    def fmt(v):
+        return "" if v is None else f"{v:,.2f}" if isinstance(v, float) else str(v)
+
+    lines = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
+    lines += ["| " + " | ".join(fmt(v) for v in row) + " |" for row in rows]
+    return "\n".join(lines)
+
+
+async def answer(question: str) -> str:
+    q = question.lower()
+    intent = next((name for words, name in KEYWORDS if any(w in q for w in words)), None)
+
+    if intent in QUERIES:
+        title, sql, table = QUERIES[intent]
+        res = await call("query", sql=sql)
+        if "error" in res:
+            return f"Error: {res['error']}"
+        return f"**{title}**\n\n{md_table(res['columns'], res['rows'])}\n\nSources: `gold.{table}`\n\n```sql\n{sql}\n```"
+
+    if intent == "column_lineage":
+        res = await call("get_column_lineage", dataset="gold.customer_360", column="revenue")
+        if "error" in res:
+            return f"Error: {res['error']}"
+        rows = [[f'{s["target_dataset"]}.{s["target_column"]}', f'{s["source_dataset"]}.{s["source_column"]}',
+                 s["transformation"]] for s in res["steps"]]
+        return ("**Lineage of `gold.customer_360.revenue`**\n\n" + md_table(["column", "derived from", "transformation"], rows)
+                + "\n\nOriginal source columns: " + ", ".join(f"`{o}`" for o in res["origins"])
+                + f"\n\nSources: `lineage_columns` (run `{res['run_id'][:8]}`)")
+
+    if intent == "lineage":
+        res = await call("get_lineage")
+        rows = [[j["job_name"], j["layer"], j["inputs"], j["outputs"], j["rows_in"], j["rows_out"], j["rows_dropped"]]
+                for j in res["jobs"]]
+        return (f"**Pipeline lineage (run `{res['run_id'][:8]}`)**\n\n"
+                + md_table(["job", "layer", "inputs", "outputs", "rows in", "rows out", "dropped"], rows)
+                + "\n\nOpen the **Lineage** tab for the graph.\n\nSources: `lineage_jobs`, `lineage_edges`")
+
+    if intent == "quality":
+        res = await call("get_data_quality")
+        rows = [[r["job_name"], r["rule"], r["rows_affected"]] for r in res["rules"]]
+        return (f"**Data quality, run `{res['run_id'][:8]}`: {res['total_rows_dropped']} rows dropped**\n\n"
+                + md_table(["job", "rule", "rows dropped"], rows) + "\n\nSources: `data_quality`")
+
+    if intent == "tables":
+        res = await call("list_tables")
+        return "**Available tables**\n\n" + md_table(["table", "layer", "rows", "description"],
+                                                    [[t["table"], t["layer"], t["rows"], t["description"]] for t in res])
+
+    return HELP
