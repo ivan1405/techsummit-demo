@@ -65,7 +65,8 @@ def wait_ready(base: str, timeout: float = 180) -> None:
 
 
 def chat(base: str, question: str) -> str:
-    return call(base, "/chat", {"messages": [{"role": "user", "content": question}]})["reply"]
+    # Just under the UI proxy's 180 s, so a hanging LLM still gets its demo-mode fallback (LLM_DEADLINE_S).
+    return call(base, "/chat", {"messages": [{"role": "user", "content": question}]}, timeout=175)["reply"]
 
 
 def checks(base: str):
