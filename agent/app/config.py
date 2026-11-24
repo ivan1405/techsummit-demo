@@ -3,6 +3,9 @@ import os
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "none").lower()
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 # Unset = provider default. Newer models (e.g. claude-sonnet-5-5, gpt-5) reject anything else.
+# Give up on the LLM after this long so the demo-mode fallback still answers before the UI proxy's 180 s timeout
+# and `make demo`'s 175 s chat check.
+LLM_DEADLINE_S = float(os.getenv("LLM_DEADLINE_S") or 90)
 LLM_TEMPERATURE = float(t) if (t := os.getenv("LLM_TEMPERATURE")) else None
 MCP_URL = os.getenv("MCP_URL", "http://localhost:8000/mcp")
 # Shared with the MCP server: without it every caller gets the reader role (PII masked).

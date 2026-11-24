@@ -177,8 +177,9 @@ Set these in `.env`:
 | `LLM_MODEL` | e.g. `gpt-4o-mini`, `claude-sonnet-4-5`, `claude-sonnet-5-5` |
 | `LLM_TEMPERATURE` | Optional. Empty uses the model default; `claude-sonnet-5-5` and `gpt-5` models only accept the default |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Your key |
+| `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` | Gateway or proxy URL, when the key is not for the public API |
 
-With `LLM_PROVIDER=none` everything still runs: review enrichment uses keyword rules (rows are tagged `method=heuristic`), and the chatbot answers a fixed set of questions (revenue, products, customers, complaints, lineage, data quality) through the same MCP tools.
+With `LLM_PROVIDER=none` everything still runs: review enrichment uses keyword rules (rows are tagged `method=heuristic`), and the chatbot answers a fixed set of questions (revenue, products, customers, complaints, lineage, data quality) through the same MCP tools. If a configured LLM fails (bad key, gateway down), the chatbot answers in demo mode and says why, so the demo keeps working.
 
 ## Local development
 

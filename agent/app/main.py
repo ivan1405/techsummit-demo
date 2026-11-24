@@ -1,5 +1,6 @@
 """FastAPI chat API in front of the LangGraph agent."""
 
+import asyncio
 import json
 import logging
 
@@ -11,7 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
 from . import confluence, linker, mcp_tools, plan
-from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
+from .config import CORS_ORIGINS, LLM_DEADLINE_S, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
 from .graph import build_graph
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -31,12 +32,23 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
 
 
+_demo_graph = None
+
+
 async def get_graph():
     global _graph
     if _graph is None:
         tools = await mcp_tools.get_tools()
         _graph = build_graph([t for name, t in tools.items() if name not in mcp_tools.ONBOARDING_TOOLS])
     return _graph
+
+
+def get_demo_graph():
+    """Keyword-intent graph used when no LLM is configured, or as a fallback when the LLM call fails."""
+    global _demo_graph
+    if _demo_graph is None:
+        _demo_graph = build_graph([], demo_mode=True)
+    return _demo_graph
 
 
 @app.get("/api/health")
@@ -60,12 +72,22 @@ async def chat(req: ChatRequest):
     if not req.messages or req.messages[-1].role != "user":
         raise HTTPException(400, "The last message must come from the user.")
     history = [HumanMessage(m.content) if m.role == "user" else AIMessage(m.content) for m in req.messages[-20:]]
+    mode, note = ("llm" if LLM_PROVIDER != "none" else "demo"), ""
     try:
         graph = await get_graph()
-        result = await graph.ainvoke({"messages": history}, {"recursion_limit": 16})
+        result = await asyncio.wait_for(graph.ainvoke({"messages": history}, {"recursion_limit": 16}),
+                                        LLM_DEADLINE_S if LLM_PROVIDER != "none" else None)
     except Exception as exc:
-        log.exception("Agent failed")
-        raise HTTPException(502, f"Agent error: {exc}") from exc
+        if LLM_PROVIDER == "none":
+            log.exception("Agent failed")
+            raise HTTPException(502, f"Agent error: {exc}") from exc
+        log.warning("LLM call failed, answering in demo mode: %s", exc)
+        mode, note = "demo", f"> The LLM ({LLM_MODEL}) is unavailable ({_failure(exc)}), so this is a demo-mode answer.\n\n"
+        try:
+            result = await get_demo_graph().ainvoke({"messages": history}, {"recursion_limit": 16})
+        except Exception as demo_exc:
+            log.exception("Demo fallback failed")
+            raise HTTPException(502, f"Agent error: {exc}") from demo_exc
 
     new = result["messages"][len(history):]
     results = {m.tool_call_id: m.content for m in new if isinstance(m, ToolMessage)}
@@ -76,7 +98,15 @@ async def chat(req: ChatRequest):
     reply = new[-1].content if new else ""
     if isinstance(reply, list):
         reply = "".join(b.get("text", "") for b in reply if isinstance(b, dict))
-    return {"reply": reply, "steps": steps, "mode": "llm" if LLM_PROVIDER != "none" else "demo"}
+    return {"reply": note + reply, "steps": steps, "mode": mode}
+
+
+def _failure(exc: Exception) -> str:
+    """Short, non-sensitive reason for an LLM failure (details go to the agent log only)."""
+    if isinstance(exc, TimeoutError):
+        return f"no reply within {LLM_DEADLINE_S:.0f} s"
+    status = getattr(exc, "status_code", None)
+    return f"HTTP {status}" if status else type(exc).__name__
 
 
 def _preview(content, limit: int = 1500) -> str:
