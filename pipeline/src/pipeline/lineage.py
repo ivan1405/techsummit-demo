@@ -78,8 +78,9 @@ class Job:
 
 
 class LineageRecorder:
-    def __init__(self, run_id: str | None = None, emit_url: str | None = None):
+    def __init__(self, run_id: str | None = None, emit_url: str | None = None, trigger: str = "manual"):
         self.run_id = run_id or str(uuid.uuid4())
+        self.trigger = trigger
         self.emit_url = (emit_url or "").rstrip("/")
         self.started_at = _now()
         self.jobs: list[Job] = []
@@ -183,7 +184,7 @@ class LineageRecorder:
                                 "rule": rule, "rows_affected": n})
         status = "FAIL" if any(j.status == "FAIL" for j in self.jobs) else "COMPLETE"
         runs = [{"run_id": self.run_id, "started_at": self.started_at, "ended_at": _now(), "status": status,
-                 "jobs": len(self.jobs)}]
+                 "jobs": len(self.jobs), "trigger": self.trigger}]
         return {
             "lineage_runs": pd.DataFrame(runs),
             "lineage_jobs": pd.DataFrame(jobs),

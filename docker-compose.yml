@@ -48,6 +48,8 @@ services:
       S3_SECRET_KEY: lakeadmin-secret
       SOURCES_DIR: /data/sources
       OPENLINEAGE_URL: ${OPENLINEAGE_URL:-}
+      SCHEDULE_MINUTES: ${SCHEDULE_MINUTES:-0}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
     volumes:
       - ./data/sources:/data/sources:ro
     depends_on:

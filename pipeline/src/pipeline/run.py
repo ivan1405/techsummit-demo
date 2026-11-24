@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from . import bronze, contracts, dictionary, gold, onboarded, silver
+from . import bronze, contracts, dictionary, gold, onboarded, ops, silver
 from .config import Settings
 from .lake import Lake
 from .lineage import LineageRecorder
@@ -23,12 +23,23 @@ def _with_metadata(df: pd.DataFrame, run_id: str, processed_at: str, source_uri:
     return df
 
 
-def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
+def _last_landed(lake: Lake, source: str) -> tuple[str, int] | None:
+    """The newest bronze file of a core source and its record count, if one was landed before."""
+    try:
+        key = lake.latest_key(lake.settings.bronze_bucket, f"{source}/")
+    except FileNotFoundError:
+        return None
+    return key, bronze.count_records(bronze.SOURCES[source], lake.get_bytes(lake.settings.bronze_bucket, key))
+
+
+def run(settings: Settings | None = None, lake: Lake | None = None, trigger: str = "manual") -> dict:
     settings = settings or Settings()
     lake = lake or Lake(settings)
     lake.ensure_buckets()
-    rec = LineageRecorder(emit_url=settings.openlineage_url)
+    rec = LineageRecorder(emit_url=settings.openlineage_url, trigger=trigger)
     run_ts = datetime.now(timezone.utc)
+    freshness = ops.arrivals(lake, rec.run_id, run_ts)
+    late = {f["source"] for f in freshness if f["status"] == "late"}
     processed_at = run_ts.isoformat()
     log.info("Run %s started", rec.run_id)
 
@@ -37,8 +48,11 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
     dictionary_rows: list[dict] = []
     contract_rows: list[dict] = []
     for source, filename in bronze.SOURCES.items():
-        with rec.job(f"bronze_{source}", "bronze", f"Land raw {filename} as-is in the bronze bucket") as job:
-            key, rows = bronze.ingest_one(lake, settings.sources_dir, source, run_ts)
+        previous = _last_landed(lake, source) if source in late else None
+        description = (f"No new {filename} delivery: reuse the last landed file" if previous
+                       else f"Land raw {filename} as-is in the bronze bucket")
+        with rec.job(f"bronze_{source}", "bronze", description) as job:
+            key, rows = previous or bronze.ingest_one(lake, settings.sources_dir, source, run_ts)
             job.input(f"source.{filename}", rows)
             job.output(f"bronze.{source}", rows=rows)
             landed[source] = key
@@ -182,6 +196,10 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
         lake.append_parquet(settings.lineage_bucket, table, df)
     lake.append_parquet(settings.lineage_bucket, "data_dictionary", dictionary.table(dictionary.tag_pii(dictionary_rows)))
     lake.append_parquet(settings.lineage_bucket, "contract_checks", contracts.table(contract_rows))
+    run_alerts = ops.alerts(rec.run_id, freshness, contract_rows, errors)
+    lake.append_parquet(settings.lineage_bucket, "source_freshness", ops.table(freshness, ops.FRESHNESS_COLUMNS))
+    lake.append_parquet(settings.lineage_bucket, "alerts", ops.table(run_alerts, ops.ALERT_COLUMNS))
+    ops.notify(settings.alert_webhook_url, run_alerts)
 
     summary = {
         "run_id": rec.run_id,
@@ -195,6 +213,8 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
         "onboarded": {s["name"]: s["feed"] for s in specs if s["name"] in onboarded_silver and s["name"] not in errors},
         "onboarding_errors": errors,
         "contracts_failed": sorted({r["dataset"] for r in contract_rows if r["status"] == "fail"}),
+        "trigger": trigger,
+        "alerts": [{k: a[k] for k in ("severity", "kind", "dataset", "message")} for a in run_alerts],
     }
     lake.put_bytes(settings.gold_bucket, "_manifest.json", json.dumps(summary, indent=2).encode())
     return summary

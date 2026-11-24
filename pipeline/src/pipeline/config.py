@@ -18,5 +18,7 @@ class Settings:
     lineage_bucket: str = _env("LINEAGE_BUCKET", "lineage")
     registry_bucket: str = _env("REGISTRY_BUCKET", "registry")
     openlineage_url: str = _env("OPENLINEAGE_URL", "")
+    schedule_minutes: int = field(default_factory=lambda: int(os.getenv("SCHEDULE_MINUTES") or 0))
+    alert_webhook_url: str = _env("ALERT_WEBHOOK_URL", "")
     llm_provider: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "none").lower())
     llm_model: str = _env("LLM_MODEL", "gpt-4o-mini")

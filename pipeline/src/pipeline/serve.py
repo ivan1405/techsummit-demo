@@ -5,7 +5,9 @@ import logging
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import connectors, onboarded
+from datetime import datetime, timezone
+
+from . import connectors, onboarded, ops
 from .config import Settings
 from .lake import Lake
 from .run import run
@@ -21,9 +23,29 @@ def _lake() -> Lake:
     return lake
 
 
-def _run(lake: Lake) -> dict:
+def _run(lake: Lake, trigger: str = "manual") -> dict:
     with _run_lock:
-        return run(lake.settings, lake)
+        return run(lake.settings, lake, trigger)
+
+
+def tick(lake: Lake, now: datetime | None = None) -> dict | None:
+    """Start a scheduled run when one is due (skipped while another run is in progress)."""
+    now = now or datetime.now(timezone.utc)
+    if not ops.due(lake, lake.settings.schedule_minutes, now) or _run_lock.locked():
+        return None
+    ops.mark_scheduled(lake, now)
+    return _run(lake, "scheduled")
+
+
+def _scheduler(stop: threading.Event, every_s: float = 5) -> None:
+    lake = None
+    while not stop.wait(every_s):
+        try:
+            lake = lake or _lake()
+            if summary := tick(lake):
+                log.info("Scheduled run %s finished with %d alert(s)", summary["run_id"], len(summary["alerts"]))
+        except Exception:  # noqa: BLE001 - keep the scheduler alive
+            log.exception("Scheduled run failed")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -44,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
     def _handle(self, fn) -> None:
         try:
             self._send(200, fn())
-        except (onboarded.OnboardError, connectors.ConnectorError, json.JSONDecodeError) as exc:
+        except (onboarded.OnboardError, connectors.ConnectorError, ops.OpsError, json.JSONDecodeError) as exc:
             self._send(400, {"detail": str(exc)})
         except Exception as exc:  # noqa: BLE001
             log.exception("Request failed")
@@ -57,6 +79,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._handle(lambda: [onboarded.public(s) for s in onboarded.load(_lake())])
         if self.path == "/connections":
             return self._handle(lambda: onboarded.list_connections(_lake()))
+        if self.path == "/schedule":
+            return self._handle(lambda: ops.schedule(_lake(), Settings().schedule_minutes))
+        if self.path == "/arrivals":
+            return self._handle(lambda: ops.arrivals(_lake()))
         if self.path.startswith("/connections/") and self.path.endswith("/schema"):
             name = self.path.removeprefix("/connections/").removesuffix("/schema")
             return self._handle(lambda: connectors.schema(onboarded.get_connection(_lake(), name)["url"]))
@@ -67,6 +93,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._handle(self._onboard)
         if self.path == "/run":
             return self._handle(lambda: _run(_lake()))
+        if self.path.startswith("/arrivals/") and self.path.endswith("/late"):
+            source = self.path.removeprefix("/arrivals/").removesuffix("/late")
+            return self._handle(lambda: ops.delay(_lake(), source, self._body().get("minutes")))
         if self.path == "/connections":
             return self._handle(lambda: onboarded.save_connection(_lake(), self._body()))
         if self.path.startswith("/connections/") and self.path.endswith("/sample"):
@@ -74,7 +103,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._handle(lambda: self._sample(name))
         self._send(404, {"detail": "Not found"})
 
+    def do_PUT(self):  # noqa: N802
+        if self.path == "/schedule":
+            return self._handle(lambda: ops.set_schedule(_lake(), self._body()))
+        self._send(404, {"detail": "Not found"})
+
     def do_DELETE(self):  # noqa: N802
+        if self.path.startswith("/arrivals/") and self.path.endswith("/late"):
+            source = self.path.removeprefix("/arrivals/").removesuffix("/late")
+            return self._handle(lambda: ops.deliver(_lake(), source))
         if self.path.startswith("/sources/"):
             name = self.path.removeprefix("/sources/")
             return self._handle(lambda: self._offboard(name))
@@ -113,6 +150,7 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     server = ThreadingHTTPServer(("0.0.0.0", 8090), Handler)
+    threading.Thread(target=_scheduler, args=(threading.Event(),), daemon=True, name="scheduler").start()
     log.info("Pipeline API listening on :8090")
     server.serve_forever()
 
