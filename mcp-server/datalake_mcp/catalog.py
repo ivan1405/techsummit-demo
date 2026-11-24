@@ -107,7 +107,9 @@ class Catalog:
             masks = [f'{MASKS.get(tag, DEFAULT_MASK).format(c=_ident(col))} AS {_ident(col)}'
                      for col, tag in pii.get(name, {}).items()]
             if name == "data_dictionary" and "pii" in _columns(con, name):
-                masks.append(f"CASE WHEN coalesce(pii, '') <> '' THEN '{MASKED}' ELSE sample_values END AS sample_values")
+                masks.append(f"CASE WHEN coalesce(pii, '') <> '' OR (dataset, column_name) IN (SELECT dataset, column_name "
+                             f"FROM data_dictionary WHERE coalesce(pii, '') <> '') THEN '{MASKED}' "
+                             f"ELSE sample_values END AS sample_values")
             select = f'SELECT * REPLACE ({", ".join(masks)}) FROM "{name}"' if masks else f'SELECT * FROM "{name}"'
             reader.register("_incoming", con.sql(select).to_arrow_table())
             reader.execute(f'CREATE TABLE "{name}" AS SELECT * FROM _incoming')

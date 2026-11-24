@@ -298,7 +298,7 @@ def pii_catalog():
     return Catalog.from_tables({
         "lineage_runs": ("lineage", t([{"run_id": RUN, "started_at": "2026-01-01T00:00:00", "ended_at": "x",
                                         "status": "COMPLETE"}])),
-        "data_dictionary": ("lineage", t(dd)),
+        "data_dictionary": ("lineage", t(dd + [{**dd[2], "run_id": "old", "pii": None, "pii_origin": None}])),
         "lineage_edges": ("lineage", t([{"run_id": RUN, "job_name": "gold_customer_360",
                                          "source_dataset": "bronze.customers", "target_dataset": "gold.customer_360"}])),
         "lineage_jobs": ("lineage", t([{"run_id": RUN, "job_name": "gold_customer_360", "layer": "gold",
@@ -327,7 +327,8 @@ def test_reader_role_masks_pii_in_sql_samples_and_dictionary(pii_catalog):
     cols = {c["column_name"]: c for c in pii_catalog.data_dictionary("gold.customer_360")["datasets"][0]["columns"]}
     assert cols["email"]["sample_values"] == "***" and cols["customer_id"]["sample_values"] == "C1"
     assert cols["email"]["pii_origin"] == "bronze.customers.email"
-    assert pii_catalog.query("SELECT sample_values FROM data_dictionary WHERE column_name = 'email'")["rows"] == [["***"]]
+    assert pii_catalog.query("SELECT sample_values FROM data_dictionary WHERE column_name = 'email'")["rows"] == [
+        ["***"], ["***"]]  # rows from runs before tagging are masked too
     analyst = pii_catalog.data_dictionary("gold.customer_360", role="analyst")["datasets"][0]["columns"]
     assert analyst[2]["sample_values"] == "ana@x.com"
 
