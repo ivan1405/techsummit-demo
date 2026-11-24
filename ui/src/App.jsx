@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
 import Chat from "./components/Chat.jsx";
+import Dictionary from "./components/Dictionary.jsx";
+import Impact from "./components/Impact.jsx";
 import Lineage from "./components/Lineage.jsx";
 import Quality from "./components/Quality.jsx";
 
-const TABS = { chat: "Chat", lineage: "Lineage", quality: "Data quality" };
+const TABS = { chat: "Chat", lineage: "Lineage", dictionary: "Data dictionary", impact: "Impact analysis", quality: "Data quality" };
 
 export default function App() {
   const [tab, setTabState] = useState(() => (location.hash.slice(1) in TABS ? location.hash.slice(1) : "chat"));
@@ -55,6 +57,8 @@ export default function App() {
       <main>
         {tab === "chat" && <Chat />}
         {tab === "lineage" && <Lineage />}
+        {tab === "dictionary" && <Dictionary />}
+        {tab === "impact" && <Impact />}
         {tab === "quality" && <Quality />}
       </main>
     </div>
