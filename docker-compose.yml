@@ -66,13 +66,19 @@ services:
     depends_on:
       mcp-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   ui:
     build: ./ui
     ports:
       - "3000:80"
     depends_on:
-      - agent
+      agent:
+        condition: service_healthy
 
   # Optional: Marquez, the reference OpenLineage UI. Start with:
   #   OPENLINEAGE_URL=http://marquez:5000 docker compose --profile marquez up
