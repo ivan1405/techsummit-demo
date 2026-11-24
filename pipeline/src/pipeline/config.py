@@ -16,6 +16,7 @@ class Settings:
     silver_bucket: str = _env("SILVER_BUCKET", "silver")
     gold_bucket: str = _env("GOLD_BUCKET", "gold")
     lineage_bucket: str = _env("LINEAGE_BUCKET", "lineage")
+    registry_bucket: str = _env("REGISTRY_BUCKET", "registry")
     openlineage_url: str = _env("OPENLINEAGE_URL", "")
     llm_provider: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "none").lower())
     llm_model: str = _env("LLM_MODEL", "gpt-4o-mini")
