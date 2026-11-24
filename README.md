@@ -66,6 +66,17 @@ Every number in a gold table can be traced back to the raw file it came from:
 
 Lineage history is appended, so you can compare runs. Ask the chatbot "Where does customer revenue come from?" or open the **Lineage** tab and click a column to trace it to its source.
 
+## Data dictionary and impact analysis
+
+- **Data dictionary tab:** every bronze, silver and gold column with its type, description, null %, distinct count, sample values and upstream columns. The pipeline profiles each run into the `data_dictionary` lineage table; descriptions live in `pipeline/src/pipeline/dictionary.py`. MCP tool: `get_data_dictionary`.
+- **Impact analysis tab:** describe a new requirement as changes (add/rename/drop a column, change logic, add/drop a dataset or source) and preview the lineage before building it. Added nodes and edges are dashed green, removals dashed red, downstream columns that lose some inputs are amber (`impacted`) and those that lose all inputs are red (`broken`). Export the proposal and its impact as JSON. Nothing runs: the analysis is applied to the latest run's column lineage. MCP tool: `analyze_change_impact`; API: `POST /api/impact`.
+
+Example request body:
+
+```json
+{"changes": [{"type": "remove_column", "dataset": "silver.customers", "column": "email"}]}
+```
+
 **Marquez (optional):** to also see the lineage in the reference OpenLineage UI:
 
 ```bash

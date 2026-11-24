@@ -17,4 +17,11 @@ export const api = {
   columnLineage: (dataset, column) =>
     request(`/api/lineage/column?dataset=${encodeURIComponent(dataset)}&column=${encodeURIComponent(column)}`),
   quality: () => request("/api/quality"),
+  dictionary: () => request("/api/dictionary"),
+  impact: (changes) =>
+    request("/api/impact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ changes }),
+    }),
 };
