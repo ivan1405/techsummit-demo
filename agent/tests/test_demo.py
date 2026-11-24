@@ -53,3 +53,17 @@ def test_column_question_uses_explain_column(monkeypatch):
 def test_md_table_escapes_pipes_and_raw_file_refs_are_not_columns():
     assert demo.md_table(["rule"], [["%Y-%m-%d | %d/%m/%Y"]]).endswith("| %Y-%m-%d \\| %d/%m/%Y |")
     assert demo.COLUMN_REF.search("where is source.orders.csv.quantity used?") is None
+
+
+def test_alerts_question_uses_get_alerts(monkeypatch):
+    calls = []
+
+    async def fake_call(name, **kwargs):
+        calls.append(name)
+        return {"run_id": "abcdef123", "active": [{"severity": "critical", "dataset": "bronze.orders",
+                                                   "message": "No new orders delivery for 180 min"}],
+                "sources": [{"source": "orders", "status": "late", "age_minutes": 180.0, "max_age_minutes": 60}]}
+
+    monkeypatch.setattr(demo, "call", fake_call)
+    text = asyncio.run(demo.answer("Is any data late?"))
+    assert calls == ["get_alerts"] and "1 active alert" in text and "bronze.orders" in text

@@ -20,6 +20,7 @@ HELP = """I'm running in **demo mode** (no LLM configured), so I understand a fi
 - *Show the pipeline lineage*
 - *What data quality issues were found?*
 - *What changed since the last run?*
+- *Are there any alerts? Is any data late?*
 - *What tables are available?*
 
 Set `LLM_PROVIDER` and an API key in `.env` to ask anything."""
@@ -41,6 +42,7 @@ QUERIES = {
 }
 
 KEYWORDS = [
+    (("alert", "data late", "late data", "late source", "on time", "deliver"), "alerts"),
     (("changed", "last run", "previous run", "run history", "diff"), "changes"),
     (("come from", "origin", "calculated", "column lineage"), "column_lineage"),
     (("lineage", "pipeline", "flow"), "lineage"),
@@ -123,6 +125,22 @@ async def answer(question: str) -> str:
         rows = [[r["job_name"], r["rule"], r["rows_affected"]] for r in res["rules"]]
         return (f"**Data quality, run `{res['run_id'][:8]}`: {res['total_rows_dropped']} rows dropped**\n\n"
                 + md_table(["job", "rule", "rows dropped"], rows) + "\n\nSources: `data_quality`")
+
+    if intent == "alerts":
+        res = await call("get_alerts")
+        if "error" in res:
+            return f"Error: {res['error']}"
+        head = (f"**{len(res['active'])} active alert(s) in run `{res['run_id'][:8]}`**" if res["active"]
+                else f"**No active alerts in run `{res['run_id'][:8]}`**: every source arrived within its SLA.")
+        out = [head]
+        if res["active"]:
+            out.append(md_table(["severity", "dataset", "alert"],
+                                [[a["severity"], a["dataset"], a["message"]] for a in res["active"]]))
+        out.append("**Source deliveries**\n\n" + md_table(
+            ["source", "status", "minutes since delivery", "SLA (min)"],
+            [[s["source"], s["status"], s["age_minutes"], s["max_age_minutes"]] for s in res["sources"]]))
+        out.append("Sources: `alerts`, `source_freshness`")
+        return "\n\n".join(out)
 
     if intent == "changes":
         res = await call("compare_runs")

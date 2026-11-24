@@ -335,6 +335,45 @@ async def trigger_run():
     return await _pipeline("POST", "/run")
 
 
+class ScheduleRequest(BaseModel):
+    enabled: bool
+    interval_minutes: int = 5
+
+
+class LateRequest(BaseModel):
+    minutes: int | None = None
+
+
+@app.get("/api/schedule")
+async def get_schedule():
+    return await _pipeline("GET", "/schedule")
+
+
+@app.put("/api/schedule")
+async def put_schedule(req: ScheduleRequest):
+    return await _pipeline("PUT", "/schedule", json=req.model_dump())
+
+
+@app.get("/api/arrivals")
+async def arrivals():
+    return await _pipeline("GET", "/arrivals")
+
+
+@app.post("/api/arrivals/{source}/late")
+async def delay_source(source: str, req: LateRequest):
+    return await _pipeline("POST", f"/arrivals/{source}/late", json=req.model_dump())
+
+
+@app.delete("/api/arrivals/{source}/late")
+async def deliver_source(source: str):
+    return await _pipeline("DELETE", f"/arrivals/{source}/late")
+
+
+@app.get("/api/alerts")
+async def alerts(limit: int = 20):
+    return await _tool("get_alerts", limit=limit)
+
+
 @app.get("/api/contracts")
 async def contracts():
     return await _tool("get_contracts")
