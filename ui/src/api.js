@@ -21,6 +21,7 @@ export const api = {
     request(`/api/lineage/column?dataset=${encodeURIComponent(dataset)}&column=${encodeURIComponent(column)}`),
   quality: () => request("/api/quality"),
   dictionary: () => request("/api/dictionary"),
+  contracts: () => request("/api/contracts"),
   stageSource: (source) => post("/api/sources", source),
   suggestLinks: (name) => post("/api/sources/suggest", { name }),
   validateLinks: (name, links, feed) => post("/api/sources/validate", { name, links, feed }),

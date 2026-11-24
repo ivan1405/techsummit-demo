@@ -6,6 +6,7 @@ import os
 import re
 import threading
 from collections import deque
+from datetime import datetime, timezone
 
 import boto3
 import duckdb
@@ -27,6 +28,7 @@ TABLE_DOCS = {
     "lineage_edges": "Lineage. Dataset-level edges (source_dataset -> target_dataset) per job and run.",
     "lineage_columns": "Lineage. Column-level lineage with the transformation applied, per run.",
     "data_quality": "Lineage. Rows dropped per data-quality rule, job and run.",
+    "contract_checks": "Lineage. Data-contract checks (row count, schema, types, not-null, unique key) per gold dataset and run.",
     "data_dictionary": "Lineage. Data dictionary: description, type, profile and upstream of every column, per run.",
 }
 
@@ -233,6 +235,35 @@ class Catalog:
             "SELECT job_name, dataset, rule, rows_affected FROM data_quality WHERE run_id = ? "
             "ORDER BY rows_affected DESC", [run_id])
         return {"run_id": run_id, "rules": rules, "total_rows_dropped": sum(r["rows_affected"] for r in rules)}
+
+    def contracts(self, run_id: str | None = None, now: datetime | None = None) -> dict:
+        """Contract status per gold dataset: latest checks plus freshness against max_age_minutes."""
+        run_id = run_id or self._latest_run_id()
+        if "contract_checks" not in self.tables:
+            raise QueryError("No contract checks recorded yet. Re-run the pipeline.")
+        now = now or datetime.now(timezone.utc)
+        checks = self._rows('SELECT dataset, owner, "check", expectation, observed, status, max_age_minutes '
+                            "FROM contract_checks WHERE run_id = ? ORDER BY dataset", [run_id])
+        updated: dict[str, str] = {}
+        for j in self._rows("SELECT outputs, ended_at FROM lineage_jobs WHERE status = 'COMPLETE'", []):
+            for out in filter(None, j["outputs"].split(", ")):
+                updated[out] = max(updated.get(out, ""), j["ended_at"] or "")
+        datasets: dict[str, dict] = {}
+        for c in checks:
+            d = datasets.setdefault(c["dataset"], {"dataset": c["dataset"], "owner": c["owner"],
+                                                   "max_age_minutes": c["max_age_minutes"], "checks": []})
+            d["checks"].append({k: c[k] for k in ("check", "expectation", "observed", "status")})
+        for d in datasets.values():
+            last = updated.get(d["dataset"])
+            age = round((now - datetime.fromisoformat(last)).total_seconds() / 60, 1) if last else None
+            limit = d["max_age_minutes"]
+            d["last_updated"], d["age_minutes"] = last, age
+            d["freshness"] = "unknown" if age is None else "fresh" if age <= limit else \
+                "stale" if age <= 2 * limit else "expired"
+            d["failed"] = sum(c["status"] == "fail" for c in d["checks"])
+            d["status"] = "red" if d["failed"] or d["freshness"] in ("expired", "unknown") else \
+                "amber" if d["freshness"] == "stale" else "green"
+        return {"run_id": run_id, "checked_at": now.isoformat(), "datasets": list(datasets.values())}
 
     # ---- data dictionary & what-if impact -----------------------------------------------
 

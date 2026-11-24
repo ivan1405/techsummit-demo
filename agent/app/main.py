@@ -199,6 +199,11 @@ async def remove_source(name: str):
     return await _pipeline("DELETE", f"/sources/{name}")
 
 
+@app.get("/api/contracts")
+async def contracts():
+    return await _tool("get_contracts")
+
+
 @app.get("/api/tables")
 async def tables():
     return await _tool("list_tables")

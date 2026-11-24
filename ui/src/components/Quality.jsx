@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import Contracts from "./Contract.jsx";
 
 export default function Quality() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [contracts, setContracts] = useState(null);
 
   useEffect(() => {
     api.quality().then(setData).catch((e) => setError(e.message));
+    api.contracts().then(setContracts).catch(() => setContracts(null));
   }, []);
 
   if (error) return <p className="error-text">{error}</p>;
@@ -39,6 +42,7 @@ export default function Quality() {
           ))}
         </tbody>
       </table>
+      {contracts && <Contracts data={contracts} />}
     </section>
   );
 }

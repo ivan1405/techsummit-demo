@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from . import bronze, dictionary, gold, onboarded, silver
+from . import bronze, contracts, dictionary, gold, onboarded, silver
 from .config import Settings
 from .lake import Lake
 from .lineage import LineageRecorder
@@ -35,6 +35,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
     log.info("BRONZE: landing raw sources")
     landed: dict[str, str] = {}
     dictionary_rows: list[dict] = []
+    contract_rows: list[dict] = []
     for source, filename in bronze.SOURCES.items():
         with rec.job(f"bronze_{source}", "bronze", f"Land raw {filename} as-is in the bronze bucket") as job:
             key, rows = bronze.ingest_one(lake, settings.sources_dir, source, run_ts)
@@ -148,6 +149,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
             gold_tables[name] = df
             available[f"gold.{name}"] = df
         dictionary_rows += dictionary.profile(f"gold.{name}", stored, columns, rec.run_id, notes)
+        contract_rows += contracts.evaluate(name, df, rec.run_id)
 
     for spec in specs:
         name, feed = spec["name"], spec["feed"]
@@ -171,6 +173,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
         notes = onboarded.descriptions(spec, list(onboarded_silver[name].columns))
         notes.update({c: f"From {s[0][0]}.{s[0][1]} ({s[0][2]})." for c, s in columns.items() if not s[0][0].startswith("silver." + name)})
         dictionary_rows += dictionary.profile(feed, stored, columns, rec.run_id, notes)
+        contract_rows += contracts.evaluate(feed_name, df, rec.run_id)
 
     log.info("LINEAGE: persisting OpenLineage events and lineage tables")
     lake.put_bytes(settings.lineage_bucket, f"events/run_id={rec.run_id}/events.jsonl",
@@ -178,6 +181,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
     for table, df in rec.tables().items():
         lake.append_parquet(settings.lineage_bucket, table, df)
     lake.append_parquet(settings.lineage_bucket, "data_dictionary", dictionary.table(dictionary_rows))
+    lake.append_parquet(settings.lineage_bucket, "contract_checks", contracts.table(contract_rows))
 
     summary = {
         "run_id": rec.run_id,
@@ -190,6 +194,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
         "enrichment": reviews["enrichment_method"].value_counts().to_dict(),
         "onboarded": {s["name"]: s["feed"] for s in specs if s["name"] in onboarded_silver and s["name"] not in errors},
         "onboarding_errors": errors,
+        "contracts_failed": sorted({r["dataset"] for r in contract_rows if r["status"] == "fail"}),
     }
     lake.put_bytes(settings.gold_bucket, "_manifest.json", json.dumps(summary, indent=2).encode())
     return summary

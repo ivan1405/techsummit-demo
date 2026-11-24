@@ -185,6 +185,13 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .registered { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 8px; font-size: 12px; }
 .registered button { background: none; border: none; color: var(--hub-muted); padding: 0 2px; font-size: 13px; }
 .registered button:hover { color: var(--hub-red-strong); }
+.contract-badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--st-border); background: var(--st-fill); color: var(--st-text); white-space: nowrap; cursor: help; }
+.contract-green { --st-border: var(--hub-success-border); --st-fill: var(--hub-success-fill); --st-text: var(--hub-success-text); }
+.contract-amber { --st-border: var(--hub-warning-border); --st-fill: var(--hub-warning-fill); --st-text: var(--hub-warning-text); }
+.contract-red { --st-border: var(--hub-danger-border); --st-fill: var(--hub-danger-fill); --st-text: var(--hub-danger-text); }
+.check-chip { display: inline-block; margin: 1px 4px 1px 0; font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--hub-success-border); color: var(--hub-success-text); background: var(--hub-success-fill); }
+.check-chip.fail { border-color: var(--hub-danger-border); color: var(--hub-danger-text); background: var(--hub-danger-fill); }
+.panel h3 { margin-top: 28px; }
 .source-graph { border: 1px solid var(--hub-line); border-radius: 8px; margin: 10px 0; overflow-x: auto; }
 
 @media (max-width: 1100px) {

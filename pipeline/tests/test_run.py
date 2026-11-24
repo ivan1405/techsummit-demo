@@ -55,3 +55,28 @@ def test_pipeline_writes_data_dictionary_for_every_layer(lake):
     assert raw["upstream"] == "source.orders.csv.unit_price" and raw["sample_values"]
     business = dd[~dd.column_name.str.startswith("_")]
     assert (business["description"] != "").all(), business[business["description"] == ""][["dataset", "column_name"]]
+
+
+def test_pipeline_checks_gold_contracts(lake):
+    summary = run(lake.settings, lake)
+
+    checks = lake.read_parquet("lineage", "contract_checks")
+    assert set(checks["run_id"]) == {summary["run_id"]}
+    assert {"gold.sales", "gold.customer_360", "gold.daily_revenue"} <= set(checks["dataset"])
+    assert (checks["status"] == "pass").all(), checks[checks.status != "pass"]
+    assert summary["contracts_failed"] == []
+    assert {"row_count", "schema", "unique:order_id", "not_null:amount"} <= set(checks[checks.dataset == "gold.sales"]["check"])
+
+
+def test_contract_violations_are_reported():
+    import pandas as pd
+    from pipeline import contracts
+
+    df = pd.DataFrame({"order_id": ["O1", "O1"], "order_date": ["2026-01-01", None], "customer_id": ["C1", "C2"],
+                       "amount": ["10", "x"], "quantity": [1, 2]})
+    by_check = {r["check"]: r for r in contracts.evaluate("sales", df, "r1")}
+    assert by_check["row_count"]["status"] == "fail"
+    assert by_check["unique:order_id"]["status"] == "fail"
+    assert by_check["not_null:order_date"]["status"] == "fail"
+    assert by_check["type:amount"]["observed"] == "string" and by_check["type:amount"]["status"] == "fail"
+    assert by_check["schema"]["status"] == "pass"
