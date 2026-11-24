@@ -118,7 +118,9 @@ def analyze(columns: dict[str, list[str]], deps: dict[Col, list[Col]], edges: li
         own = [cols[c] for c in cols if c[0] == dataset]
         if "broken" in own:
             datasets[dataset] = "broken"
-        elif any(s != "unchanged" for s in own):
+        elif any(s in ROOT or s == "added" for s in own):
+            datasets[dataset] = "modified"
+        elif "impacted" in own:
             datasets[dataset] = "impacted"
 
     changed = [

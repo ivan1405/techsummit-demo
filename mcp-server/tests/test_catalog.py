@@ -149,6 +149,7 @@ def test_impact_remove_column_breaks_and_impacts_downstream(dict_catalog):
     nodes = {n["id"]: n["status"] for n in rep["nodes"]}
     assert nodes["gold.sales"] == "broken" and nodes["gold.daily"] == "impacted"
     assert nodes["source.orders.csv"] == "unchanged"
+    assert nodes["bronze.orders"] == "modified" and nodes["silver.orders"] == "broken"
 
 
 def test_impact_add_dataset_and_column_adds_nodes_and_edges(dict_catalog):
