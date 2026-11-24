@@ -77,6 +77,10 @@ Example request body:
 {"changes": [{"type": "remove_column", "dataset": "silver.customers", "column": "email"}]}
 ```
 
+### Data contracts and freshness
+
+Each gold dataset has a contract in `pipeline/src/pipeline/contracts.py`: owner, row-count range, required columns and types, not-null columns, a unique key and a `max_age_minutes`. Every run writes the results to `lineage.contract_checks`; the MCP tool `get_contracts` adds freshness (`fresh` ≤ max age, `stale` ≤ 2×, `expired` beyond) and a status: green, amber (stale) or red (failed check or expired). Badges appear in the **Data dictionary**; details are in **Data quality**. Onboarded datasets get a default contract (accepted schema, ≥ 1 row, 24 h).
+
 ### Onboarding a new data source
 
 In the **Data dictionary** tab, **+ Add data source** walks through:
