@@ -5,13 +5,13 @@ import logging
 
 import httpx
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
 from . import confluence, linker, mcp_tools, plan
-from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER, PIPELINE_URL
+from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER, MCP_ANALYST_TOKEN, PIPELINE_URL
 from .graph import build_graph
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -41,7 +41,18 @@ async def get_graph():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "llm_provider": LLM_PROVIDER, "model": LLM_MODEL if LLM_PROVIDER != "none" else None}
+    return {"status": "ok", "llm_provider": LLM_PROVIDER, "model": LLM_MODEL if LLM_PROVIDER != "none" else None,
+            "roles": list(mcp_tools.ROLES) if MCP_ANALYST_TOKEN else ["reader"]}
+
+
+@app.middleware("http")
+async def data_role(request: Request, call_next):
+    """X-Data-Role from the UI picks the data role for the MCP calls of this request (demo stand-in for SSO)."""
+    token = mcp_tools.role.set("analyst" if request.headers.get("x-data-role") == "analyst" else "reader")
+    try:
+        return await call_next(request)
+    finally:
+        mcp_tools.role.reset(token)
 
 
 @app.post("/api/chat")

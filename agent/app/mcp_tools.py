@@ -5,14 +5,30 @@ import contextvars
 import json
 import logging
 
+import httpx
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from mcp.shared._httpx_utils import create_mcp_http_client
 
-from .config import MCP_URL
+from .config import MCP_ANALYST_TOKEN, MCP_URL
 
 log = logging.getLogger(__name__)
 
-_client = MultiServerMCPClient({"datalake": {"url": MCP_URL, "transport": "streamable_http"}})
+ROLES = ("reader", "analyst")
+# Data role of the current request: the MCP server masks PII columns unless it is "analyst".
+role: contextvars.ContextVar[str] = contextvars.ContextVar("data_role", default="reader")
+
+
+def _http_client(headers: dict | None = None, timeout: httpx.Timeout | None = None,
+                 auth: httpx.Auth | None = None) -> httpx.AsyncClient:
+    extra = {"X-Data-Role": role.get()}
+    if role.get() == "analyst" and MCP_ANALYST_TOKEN:
+        extra["X-Data-Token"] = MCP_ANALYST_TOKEN
+    return create_mcp_http_client({**(headers or {}), **extra}, timeout, auth)
+
+
+_client = MultiServerMCPClient({"datalake": {"url": MCP_URL, "transport": "streamable_http",
+                                             "httpx_client_factory": _http_client}})
 _tools: dict[str, BaseTool] = {}
 _lock = asyncio.Lock()
 # Source onboarding tools are driven by the UI, not offered to the chat agent.
