@@ -4,6 +4,8 @@ Descriptions live here, next to the code that produces the columns; the pipeline
 table it writes and stores the result as the `data_dictionary` lineage table.
 """
 
+import re
+
 import pandas as pd
 
 from .lineage import ColumnLineage
@@ -117,7 +119,17 @@ DESCRIPTIONS: dict[str, dict[str, str]] = {
 }
 
 COLUMNS = ["run_id", "dataset", "layer", "column_name", "position", "data_type", "description", "null_pct",
-           "distinct_count", "sample_values", "upstream", "transformation"]
+           "distinct_count", "sample_values", "upstream", "transformation", "pii", "pii_origin"]
+
+PII_PATTERNS = {
+    "email": re.compile(r"(^|_)e_?mail(_|$)"),
+    "name": re.compile(r"^(full_?name|first_?name|last_?name|surname|customer_name|contact_name|name)$"),
+    "phone": re.compile(r"(^|_)(phone|mobile|tel)(_|$)"),
+    "address": re.compile(r"(^|_)(address|street|postcode|zip_?code)(_|$)"),
+    "birth_date": re.compile(r"(^|_)(birth_?date|date_of_birth|dob)(_|$)"),
+}
+# Aggregates and hashes of personal data are not personal data themselves.
+NOT_PROPAGATED = re.compile(r"count|sum|avg|mean|min|max|hash", re.I)
 
 
 def describe(dataset: str, column: str) -> str:
@@ -151,3 +163,30 @@ def profile(dataset: str, df: pd.DataFrame, lineage: ColumnLineage, run_id: str,
 
 def table(rows: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=COLUMNS)
+
+
+def pii_tag(column: str) -> str:
+    leaf = column.lower().rsplit(".", 1)[-1]
+    return next((tag for tag, pattern in PII_PATTERNS.items() if pattern.search(leaf)), "")
+
+
+def tag_pii(rows: list[dict]) -> list[dict]:
+    """Tag personal data by column name and carry each tag downstream through column lineage; `pii_origin` is
+    the most upstream column the personal data comes from."""
+    by_ref = {f"{r['dataset']}.{r['column_name']}": r for r in rows}
+
+    def resolve(r: dict, seen: frozenset = frozenset()) -> tuple[str, str]:
+        if "pii" not in r:
+            ref = f"{r['dataset']}.{r['column_name']}"
+            tag, origin = (pii_tag(r["column_name"]), ref) if pii_tag(r["column_name"]) else ("", "")
+            if not NOT_PROPAGATED.search(r.get("transformation") or ""):
+                for u in (r.get("upstream") or "").split(", "):
+                    if u in by_ref and u not in seen and (up := resolve(by_ref[u], seen | {ref}))[0]:
+                        tag, origin = up
+                        break
+            r["pii"], r["pii_origin"] = tag, origin
+        return r["pii"], r["pii_origin"]
+
+    for r in rows:
+        resolve(r)
+    return rows

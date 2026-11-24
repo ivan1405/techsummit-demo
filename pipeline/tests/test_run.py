@@ -40,6 +40,10 @@ def test_full_pipeline_writes_all_layers_and_lineage(lake):
 
     run(lake.settings, lake)
     assert len(lake.read_parquet("lineage", "lineage_runs")) == 2
+    dd = lake.read_parquet("lineage", "data_dictionary")
+    pii = dd[dd["run_id"] == dd["run_id"].iloc[-1]].set_index(["dataset", "column_name"])["pii"]
+    assert pii["gold.customer_360", "email"] == "email" and pii["gold.sales", "customer_name"] == "name"
+    assert pii["gold.customer_360", "revenue"] == ""
     outputs = lake.read_parquet("lineage", "lineage_outputs")
     assert outputs["run_id"].nunique() == 2
     latest = outputs[outputs["run_id"] == outputs["run_id"].iloc[-1]].set_index("dataset")
