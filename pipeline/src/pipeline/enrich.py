@@ -5,6 +5,7 @@ Uses an LLM when LLM_PROVIDER is configured, otherwise a deterministic keyword f
 
 import json
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
@@ -41,14 +42,16 @@ def _heuristic(text: str) -> dict:
 
 
 def get_chat_model(provider: str, model: str):
+    # Unset = provider default. Newer models (e.g. claude-sonnet-5-5, gpt-5) reject anything else.
+    temperature = float(t) if (t := os.getenv("LLM_TEMPERATURE")) else None
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
-        return ChatOpenAI(model=model, temperature=0)
+        return ChatOpenAI(model=model, temperature=temperature)
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(model=model, temperature=0)
+        return ChatAnthropic(model=model, temperature=temperature)
     return None
 
 

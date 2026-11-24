@@ -5,7 +5,7 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from . import demo
-from .config import LLM_MODEL, LLM_PROVIDER
+from .config import LLM_MODEL, LLM_PROVIDER, LLM_TEMPERATURE
 
 SYSTEM_PROMPT = """You are the Parser AI data assistant for the Tech Summit data platform.
 You answer business questions using ONLY the data lake, accessed through your MCP tools.
@@ -29,11 +29,11 @@ def get_llm():
     if LLM_PROVIDER == "openai":
         from langchain_openai import ChatOpenAI
 
-        return ChatOpenAI(model=LLM_MODEL, temperature=0)
+        return ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
     if LLM_PROVIDER == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(model=LLM_MODEL, temperature=0)
+        return ChatAnthropic(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
     return None
 
 
