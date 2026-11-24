@@ -28,7 +28,11 @@ export default function Ops({ version, onChange }) {
       setError(e.message);
     }
   };
-  const save = (patch) => act(async () => setSchedule(await api.setSchedule({ ...schedule, ...patch })));
+  const save = (patch) => {
+    const next = { ...schedule, ...patch };
+    setSchedule(next);
+    act(async () => setSchedule(await api.setSchedule(next)));
+  };
   const late = Object.fromEntries((alerts?.sources || []).map((s) => [s.source, s]));
 
   return (
