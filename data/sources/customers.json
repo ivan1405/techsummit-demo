@@ -1,0 +1,530 @@
+[
+  {
+    "customer_id": "C0001",
+    "full_name": "Sergio Fernandez",
+    "email": "SERGIO.FERNANDEZ1@EXAMPLE.COM",
+    "country": "AR",
+    "segment": "SMB",
+    "signup_date": "11/04/2025"
+  },
+  {
+    "customer_id": "C0002",
+    "full_name": "Irene Alonso",
+    "email": " Irene.Alonso2@example.com ",
+    "country": "France",
+    "segment": "Consumer",
+    "signup_date": "2025/08/07"
+  },
+  {
+    "customer_id": "C0003",
+    "full_name": "  Luis Fernandez",
+    "email": " Luis.Fernandez3@example.com ",
+    "country": "france ",
+    "segment": "smb",
+    "signup_date": "22/08/2025"
+  },
+  {
+    "customer_id": "C0004",
+    "full_name": "Irene Gomez",
+    "email": " Irene.Gomez4@example.com ",
+    "country": "AR",
+    "segment": "enterprise",
+    "signup_date": "2025/07/09"
+  },
+  {
+    "customer_id": "C0005",
+    "full_name": "MARTA Sanchez",
+    "email": "MARTA.SANCHEZ5@EXAMPLE.COM",
+    "country": "France",
+    "segment": "smb",
+    "signup_date": "2025-09-03"
+  },
+  {
+    "customer_id": "C0006",
+    "full_name": "  Sofia Diaz",
+    "email": " Sofia.Diaz6@example.com ",
+    "country": "portugal",
+    "segment": "SMB",
+    "signup_date": "2025-08-01"
+  },
+  {
+    "customer_id": "C0007",
+    "full_name": "Nerea Gomez",
+    "email": "NEREA.GOMEZ7@EXAMPLE.COM",
+    "country": "Argentina",
+    "segment": "consumer",
+    "signup_date": "2025-07-17"
+  },
+  {
+    "customer_id": "C0008",
+    "full_name": "JAVIER Martinez",
+    "email": "Javier.Martinez8@example.com",
+    "country": "United Kingdom",
+    "segment": "enterprise",
+    "signup_date": "2025-03-28"
+  },
+  {
+    "customer_id": "C0009",
+    "full_name": "  Luis Alonso",
+    "email": "Luis.Alonso9@example.com",
+    "country": "Portugal",
+    "segment": "Enterprise",
+    "signup_date": "2025-05-03"
+  },
+  {
+    "customer_id": "C0010",
+    "full_name": "IVAN Garcia",
+    "email": " Ivan.Garcia10@example.com ",
+    "country": "AR",
+    "segment": "enterprise",
+    "signup_date": "2025/03/13"
+  },
+  {
+    "customer_id": "C0011",
+    "full_name": "ELENA Fernandez",
+    "email": "Elena.Fernandez11@example.com",
+    "country": "United Kingdom",
+    "segment": "consumer",
+    "signup_date": "11/08/2025"
+  },
+  {
+    "customer_id": "C0012",
+    "full_name": "JAVIER Martinez",
+    "email": "JAVIER.MARTINEZ12@EXAMPLE.COM",
+    "country": "ES",
+    "segment": "Consumer",
+    "signup_date": "2025-01-12"
+  },
+  {
+    "customer_id": "C0013",
+    "full_name": "IRENE Fernandez",
+    "email": " Irene.Fernandez13@example.com ",
+    "country": "AR",
+    "segment": "smb",
+    "signup_date": "2025/02/28"
+  },
+  {
+    "customer_id": "C0014",
+    "full_name": "Sofia Diaz",
+    "email": "SOFIA.DIAZ14@EXAMPLE.COM",
+    "country": "spain",
+    "segment": "consumer",
+    "signup_date": "2025/06/12"
+  },
+  {
+    "customer_id": "C0015",
+    "full_name": "PABLO Diaz",
+    "email": "PABLO.DIAZ15@EXAMPLE.COM",
+    "country": "United Kingdom",
+    "segment": "SMB",
+    "signup_date": "2025-10-03"
+  },
+  {
+    "customer_id": "C0016",
+    "full_name": "  Sofia Perez",
+    "email": "Sofia.Perez16@example.com",
+    "country": "Argentina",
+    "segment": "consumer",
+    "signup_date": "2025-04-11"
+  },
+  {
+    "customer_id": "C0017",
+    "full_name": "Miguel Fernandez",
+    "email": "Miguel.Fernandez17@example.com",
+    "country": "UK",
+    "segment": "Enterprise",
+    "signup_date": "22/09/2025"
+  },
+  {
+    "customer_id": "C0018",
+    "full_name": "Miguel Fernandez",
+    "email": "Miguel.Fernandez18@example.com",
+    "country": "Argentina",
+    "segment": "SMB",
+    "signup_date": "2025/04/19"
+  },
+  {
+    "customer_id": "C0019",
+    "full_name": "Irene Martinez",
+    "email": "IRENE.MARTINEZ19@EXAMPLE.COM",
+    "country": "Spain",
+    "segment": "SMB",
+    "signup_date": "2025-03-20"
+  },
+  {
+    "customer_id": "C0020",
+    "full_name": "Elena Alonso",
+    "email": "ELENA.ALONSO20@EXAMPLE.COM",
+    "country": "España",
+    "segment": "Enterprise",
+    "signup_date": "20/04/2025"
+  },
+  {
+    "customer_id": "C0021",
+    "full_name": "Nerea Garcia",
+    "email": " Nerea.Garcia21@example.com ",
+    "country": "portugal",
+    "segment": "Enterprise",
+    "signup_date": "07/01/2025"
+  },
+  {
+    "customer_id": "C0022",
+    "full_name": "LUCIA Sanchez",
+    "email": "LUCIA.SANCHEZ22@EXAMPLE.COM",
+    "country": "United Kingdom",
+    "segment": "Enterprise",
+    "signup_date": "06/09/2025"
+  },
+  {
+    "customer_id": "C0023",
+    "full_name": "NEREA Gomez",
+    "email": "NEREA.GOMEZ23@EXAMPLE.COM",
+    "country": "AR",
+    "segment": "smb",
+    "signup_date": "2025-03-28"
+  },
+  {
+    "customer_id": "C0024",
+    "full_name": "ANA Martinez",
+    "email": "ANA.MARTINEZ24@EXAMPLE.COM",
+    "country": "United Kingdom",
+    "segment": "Consumer",
+    "signup_date": "2025/07/05"
+  },
+  {
+    "customer_id": "C0025",
+    "full_name": "Lucia Lopez",
+    "email": "LUCIA.LOPEZ25@EXAMPLE.COM",
+    "country": "france ",
+    "segment": "enterprise",
+    "signup_date": "2025-05-12"
+  },
+  {
+    "customer_id": "C0026",
+    "full_name": "IRENE Diaz",
+    "email": " Irene.Diaz26@example.com ",
+    "country": "FR",
+    "segment": "Enterprise",
+    "signup_date": "2025/05/18"
+  },
+  {
+    "customer_id": "C0027",
+    "full_name": "UNAI Martinez",
+    "email": " Unai.Martinez27@example.com ",
+    "country": "portugal",
+    "segment": "Consumer",
+    "signup_date": "2025/05/29"
+  },
+  {
+    "customer_id": "C0028",
+    "full_name": "ANDRES Martinez",
+    "email": "ANDRES.MARTINEZ28@EXAMPLE.COM",
+    "country": "España",
+    "segment": "SMB",
+    "signup_date": "2025/07/03"
+  },
+  {
+    "customer_id": "C0029",
+    "full_name": "LUIS Sanchez",
+    "email": " Luis.Sanchez29@example.com ",
+    "country": "FR",
+    "segment": "smb",
+    "signup_date": "22/09/2025"
+  },
+  {
+    "customer_id": "C0030",
+    "full_name": "CLARA Lopez",
+    "email": "CLARA.LOPEZ30@EXAMPLE.COM",
+    "country": "AR",
+    "segment": "SMB",
+    "signup_date": "26/05/2025"
+  },
+  {
+    "customer_id": "C0031",
+    "full_name": "Nerea Fernandez",
+    "email": "Nerea.Fernandez31@example.com",
+    "country": "GB",
+    "segment": "consumer",
+    "signup_date": "2025/07/06"
+  },
+  {
+    "customer_id": "C0032",
+    "full_name": "DIEGO Perez",
+    "email": " Diego.Perez32@example.com ",
+    "country": "UK",
+    "segment": "Consumer",
+    "signup_date": "2025/09/07"
+  },
+  {
+    "customer_id": "C0033",
+    "full_name": "IRENE Martinez",
+    "email": "IRENE.MARTINEZ33@EXAMPLE.COM",
+    "country": "Argentina",
+    "segment": "Consumer",
+    "signup_date": "24/06/2025"
+  },
+  {
+    "customer_id": "C0034",
+    "full_name": "Carlos Perez",
+    "email": "CARLOS.PEREZ34@EXAMPLE.COM",
+    "country": "Argentina",
+    "segment": "smb",
+    "signup_date": "2025-03-09"
+  },
+  {
+    "customer_id": "C0035",
+    "full_name": "Paula Perez",
+    "email": "Paula.Perez35@example.com",
+    "country": "España",
+    "segment": "consumer",
+    "signup_date": "10/01/2025"
+  },
+  {
+    "customer_id": "C0036",
+    "full_name": "Sergio Diaz",
+    "email": "Sergio.Diaz36@example.com",
+    "country": "Argentina",
+    "segment": "smb",
+    "signup_date": "05/10/2025"
+  },
+  {
+    "customer_id": "C0037",
+    "full_name": "  Nerea Martinez",
+    "email": " Nerea.Martinez37@example.com ",
+    "country": "FR",
+    "segment": "smb",
+    "signup_date": "2025/06/24"
+  },
+  {
+    "customer_id": "C0038",
+    "full_name": "Irene Ruiz",
+    "email": "IRENE.RUIZ38@EXAMPLE.COM",
+    "country": "AR",
+    "segment": "Consumer",
+    "signup_date": "2025-07-30"
+  },
+  {
+    "customer_id": "C0039",
+    "full_name": "  Carlos Alonso",
+    "email": " Carlos.Alonso39@example.com ",
+    "country": "PT",
+    "segment": "Consumer",
+    "signup_date": "01/03/2025"
+  },
+  {
+    "customer_id": "C0040",
+    "full_name": "  Javier Gomez",
+    "email": " Javier.Gomez40@example.com ",
+    "country": "GB",
+    "segment": "Enterprise",
+    "signup_date": "2025-07-21"
+  },
+  {
+    "customer_id": "C0041",
+    "full_name": "Ana Gomez",
+    "email": " Ana.Gomez41@example.com ",
+    "country": "UK",
+    "segment": "SMB",
+    "signup_date": "2025-10-09"
+  },
+  {
+    "customer_id": "C0042",
+    "full_name": "  Ivan Gomez",
+    "email": "Ivan.Gomez42@example.com",
+    "country": "Portugal",
+    "segment": "consumer",
+    "signup_date": "11/10/2025"
+  },
+  {
+    "customer_id": "C0043",
+    "full_name": "  Carlos Ruiz",
+    "email": "CARLOS.RUIZ43@EXAMPLE.COM",
+    "country": "spain",
+    "segment": "consumer",
+    "signup_date": "21/10/2025"
+  },
+  {
+    "customer_id": "C0044",
+    "full_name": "ELENA Ruiz",
+    "email": " Elena.Ruiz44@example.com ",
+    "country": "Portugal",
+    "segment": "Consumer",
+    "signup_date": "2025-03-20"
+  },
+  {
+    "customer_id": "C0045",
+    "full_name": "Ivan Martinez",
+    "email": "Ivan.Martinez45@example.com",
+    "country": "United Kingdom",
+    "segment": "smb",
+    "signup_date": "2025/04/21"
+  },
+  {
+    "customer_id": "C0046",
+    "full_name": "  Marta Fernandez",
+    "email": " Marta.Fernandez46@example.com ",
+    "country": "España",
+    "segment": "enterprise",
+    "signup_date": "2025/01/14"
+  },
+  {
+    "customer_id": "C0047",
+    "full_name": "Laura Martinez",
+    "email": "LAURA.MARTINEZ47@EXAMPLE.COM",
+    "country": "FR",
+    "segment": "SMB",
+    "signup_date": "26/10/2025"
+  },
+  {
+    "customer_id": "C0048",
+    "full_name": "  Sofia Gomez",
+    "email": "Sofia.Gomez48@example.com",
+    "country": "FR",
+    "segment": "SMB",
+    "signup_date": "2025-02-28"
+  },
+  {
+    "customer_id": "C0049",
+    "full_name": "NEREA Gomez",
+    "email": " Nerea.Gomez49@example.com ",
+    "country": "portugal",
+    "segment": "smb",
+    "signup_date": "2025/04/08"
+  },
+  {
+    "customer_id": "C0050",
+    "full_name": "  Laura Martinez",
+    "email": "LAURA.MARTINEZ50@EXAMPLE.COM",
+    "country": "France",
+    "segment": "consumer",
+    "signup_date": "27/08/2025"
+  },
+  {
+    "customer_id": "C0051",
+    "full_name": "ELENA Martinez",
+    "email": " Elena.Martinez51@example.com ",
+    "country": "france ",
+    "segment": "consumer",
+    "signup_date": "2025/05/07"
+  },
+  {
+    "customer_id": "C0052",
+    "full_name": "  Unai Martinez",
+    "email": "UNAI.MARTINEZ52@EXAMPLE.COM",
+    "country": "portugal",
+    "segment": "smb",
+    "signup_date": "25/08/2025"
+  },
+  {
+    "customer_id": "C0053",
+    "full_name": "Laura Garcia",
+    "email": "Laura.Garcia53@example.com",
+    "country": "España",
+    "segment": "Enterprise",
+    "signup_date": "2025/04/09"
+  },
+  {
+    "customer_id": "C0054",
+    "full_name": "Sergio Gomez",
+    "email": " Sergio.Gomez54@example.com ",
+    "country": "spain",
+    "segment": "enterprise",
+    "signup_date": "15/04/2025"
+  },
+  {
+    "customer_id": "C0055",
+    "full_name": "  Sofia Diaz",
+    "email": " Sofia.Diaz55@example.com ",
+    "country": "France",
+    "segment": "SMB",
+    "signup_date": "21/06/2025"
+  },
+  {
+    "customer_id": "C0056",
+    "full_name": "Marta Alonso",
+    "email": "Marta.Alonso56@example.com",
+    "country": "France",
+    "segment": "consumer",
+    "signup_date": "2025-10-09"
+  },
+  {
+    "customer_id": "C0057",
+    "full_name": "NEREA Sanchez",
+    "email": " Nerea.Sanchez57@example.com ",
+    "country": "Argentina",
+    "segment": "Consumer",
+    "signup_date": "2025/04/18"
+  },
+  {
+    "customer_id": "C0058",
+    "full_name": "Miguel Gomez",
+    "email": "MIGUEL.GOMEZ58@EXAMPLE.COM",
+    "country": "ES",
+    "segment": "SMB",
+    "signup_date": "11/04/2025"
+  },
+  {
+    "customer_id": "C0059",
+    "full_name": "Ana Garcia",
+    "email": "Ana.Garcia59@example.com",
+    "country": "PT",
+    "segment": "enterprise",
+    "signup_date": "2025/01/07"
+  },
+  {
+    "customer_id": "C0060",
+    "full_name": "  Ivan Perez",
+    "email": "IVAN.PEREZ60@EXAMPLE.COM",
+    "country": "france ",
+    "segment": "SMB",
+    "signup_date": "04/01/2025"
+  },
+  {
+    "customer_id": "C0049",
+    "full_name": "NEREA Gomez",
+    "email": " Nerea.Gomez49@example.com ",
+    "country": "portugal",
+    "segment": "smb",
+    "signup_date": "2025/04/08"
+  },
+  {
+    "customer_id": "C0051",
+    "full_name": "ELENA Martinez",
+    "email": " Elena.Martinez51@example.com ",
+    "country": "france ",
+    "segment": "consumer",
+    "signup_date": "2025/05/07"
+  },
+  {
+    "customer_id": "C0036",
+    "full_name": "Sergio Diaz",
+    "email": "Sergio.Diaz36@example.com",
+    "country": "Argentina",
+    "segment": "smb",
+    "signup_date": "05/10/2025"
+  },
+  {
+    "customer_id": "C0040",
+    "full_name": "  Javier Gomez",
+    "email": " Javier.Gomez40@example.com ",
+    "country": "GB",
+    "segment": "Enterprise",
+    "signup_date": "2025-07-21"
+  },
+  {
+    "customer_id": "C0008",
+    "full_name": "JAVIER Martinez",
+    "email": "Javier.Martinez8@example.com",
+    "country": "United Kingdom",
+    "segment": "enterprise",
+    "signup_date": "2025-03-28"
+  },
+  {
+    "customer_id": null,
+    "full_name": "Ghost",
+    "email": null,
+    "country": "??",
+    "segment": null,
+    "signup_date": "not-a-date"
+  }
+]
