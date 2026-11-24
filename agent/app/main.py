@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
-from . import mcp_tools
+from . import linker, mcp_tools
 from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER
 from .graph import build_graph
 
@@ -32,7 +32,8 @@ class ChatRequest(BaseModel):
 async def get_graph():
     global _graph
     if _graph is None:
-        _graph = build_graph(list((await mcp_tools.get_tools()).values()))
+        tools = await mcp_tools.get_tools()
+        _graph = build_graph([t for name, t in tools.items() if name not in mcp_tools.ONBOARDING_TOOLS])
     return _graph
 
 
@@ -113,6 +114,50 @@ async def impact(req: ImpactRequest):
     if isinstance(res, dict) and "error" in res:
         raise HTTPException(400, res["error"])
     return res
+
+
+class SourceRequest(BaseModel):
+    kind: str
+    name: str
+    filename: str = ""
+    content: str = ""
+    url: str = ""
+    table: str = ""
+    query: str = ""
+
+
+class LinksRequest(BaseModel):
+    name: str
+    links: list[dict] = []
+    feed: str = ""
+
+
+async def _checked(tool: str, /, **args):
+    try:
+        res = await mcp_tools.call(tool, **args)
+    except Exception as exc:
+        raise HTTPException(502, f"MCP error: {exc}") from exc
+    if isinstance(res, dict) and "error" in res:
+        raise HTTPException(400, res["error"])
+    return res
+
+
+@app.post("/api/sources")
+async def stage_source(req: SourceRequest):
+    return await _checked("stage_source", **req.model_dump())
+
+
+@app.post("/api/sources/suggest")
+async def suggest_links(req: LinksRequest):
+    suggestion = await _checked("suggest_source_links", name=req.name)
+    profile = await _checked("get_staged_source", name=req.name)
+    links, mode = await linker.review(profile, suggestion)
+    return {"links": links, "mode": mode, "targets": suggestion["targets"]}
+
+
+@app.post("/api/sources/validate")
+async def validate_links(req: LinksRequest):
+    return await _checked("validate_source_links", name=req.name, links=req.links, feed=req.feed)
 
 
 @app.get("/api/tables")

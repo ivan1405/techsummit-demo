@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
+import AddSource from "./Sources.jsx";
 
 const LAYERS = ["all", "bronze", "silver", "gold"];
 
@@ -13,6 +14,7 @@ export default function Dictionary() {
   const [search, setSearch] = useState("");
   const [layer, setLayer] = useState("all");
   const [showMeta, setShowMeta] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     api.dictionary().then(setData).catch((e) => setError(e.message));
@@ -67,7 +69,11 @@ export default function Dictionary() {
           <input type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} />
           Metadata columns
         </label>
+        <button className="primary" aria-expanded={adding} onClick={() => setAdding(!adding)}>
+          + Add data source
+        </button>
       </div>
+      {adding && <AddSource onClose={() => setAdding(false)} />}
       <p className="muted" aria-live="polite">
         {datasets.length} tables · {total} columns
       </p>

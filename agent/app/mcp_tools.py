@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 _client = MultiServerMCPClient({"datalake": {"url": MCP_URL, "transport": "streamable_http"}})
 _tools: dict[str, BaseTool] = {}
 _lock = asyncio.Lock()
+# Source onboarding tools are driven by the UI, not offered to the chat agent.
+ONBOARDING_TOOLS = {"stage_source", "get_staged_source", "suggest_source_links", "validate_source_links"}
 calls: contextvars.ContextVar[list | None] = contextvars.ContextVar("mcp_calls", default=None)
 
 
@@ -45,7 +47,7 @@ def parse_result(result) -> dict | list | str:
         return result
 
 
-async def call(name: str, **args) -> dict | list | str:
+async def call(name: str, /, **args) -> dict | list | str:
     """Call an MCP tool directly; recorded in `calls` when a recorder list is set."""
     tools = await get_tools()
     result = parse_result(await tools[name].ainvoke(args))

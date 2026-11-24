@@ -77,6 +77,17 @@ Example request body:
 {"changes": [{"type": "remove_column", "dataset": "silver.customers", "column": "email"}]}
 ```
 
+### Onboarding a new data source
+
+In the **Data dictionary** tab, **+ Add data source** walks through:
+
+1. **Source:** upload a CSV/JSON/JSONL file, paste a JSON object, or read a database table or SELECT (`postgresql://…` or `sqlite:///…`, read-only, max 5000 rows). Try `data/samples/loyalty.json`, `data/samples/returns.csv`, or the demo Postgres: `docker compose --profile sources up`, then `postgresql://reader:reader@source-db:5432/erp`, table `support_tickets`.
+2. **Profile:** types, nulls, distinct counts and samples, like the dictionary.
+3. **Linkages:** each column is suggested as a `join_key`, `maps_to` an existing column, or a `new` attribute. Candidates come from name similarity and real value overlap with silver/gold data; with an LLM configured the model reviews them and explains each choice. Edit any relation or target.
+4. **Validate:** join keys are checked against the data (% of values found, orphan examples, whether the target is unique), and the impact graph shows the planned `source → bronze → silver → feed` lineage. Export it all as JSON.
+
+Nothing is ingested: staged sources live in the MCP server's memory only. MCP tools: `stage_source`, `get_staged_source`, `suggest_source_links`, `validate_source_links` (not offered to the chat agent).
+
 **Marquez (optional):** to also see the lineage in the reference OpenLineage UI:
 
 ```bash

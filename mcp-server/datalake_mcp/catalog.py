@@ -3,6 +3,7 @@
 import io
 import logging
 import os
+import re
 import threading
 from collections import deque
 
@@ -11,7 +12,7 @@ import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from . import impact
+from . import impact, sources
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class Catalog:
         self._fingerprint: tuple | None = None
         self._con: duckdb.DuckDBPyConnection | None = None
         self.tables: dict[str, str] = {}
+        self._values: dict[str, set[str]] = {}
 
     @classmethod
     def from_env(cls) -> "Catalog":
@@ -88,6 +90,7 @@ class Catalog:
         con.execute("SET lock_configuration = true")
         old, self._con = self._con, con
         self.tables = {name: bucket for name, (bucket, _) in tables.items()}
+        self._values = {}
         if old is not None:
             old.close()
 
@@ -263,6 +266,63 @@ class Catalog:
             raise QueryError(f"Unknown dataset '{dataset}'.")
         datasets = [d for d in out.values() if d["columns"] or not needle]
         return {"run_id": run_id, "datasets": datasets}
+
+    # ---- candidate sources: linking & validation ---------------------------------------------
+
+    def link_targets(self) -> dict[str, dict]:
+        """Silver and gold business columns a new source can link to, keyed by 'layer.dataset.column'."""
+        out = {}
+        for d in self.data_dictionary()["datasets"]:
+            if d["layer"] not in ("silver", "gold"):
+                continue
+            for c in d["columns"]:
+                if c["column_name"].startswith("_"):
+                    continue
+                ref = f'{d["dataset"]}.{c["column_name"]}'
+                out[ref] = {"ref": ref, "dataset": d["dataset"], "column": c["column_name"],
+                            "data_type": c["data_type"], "description": c["description"],
+                            "is_key": bool(d["rows"]) and c["distinct_count"] >= sources.KEY_RATIO * d["rows"]}
+        return out
+
+    def column_values(self, ref: str, limit: int = 50000) -> set[str]:
+        """Distinct non-null values of a silver/gold column, as strings (silver is read straight from S3)."""
+        if ref in self._values:
+            return self._values[ref]
+        dataset, column = impact.split_ref(ref)
+        layer, name = dataset.split(".", 1)
+        quoted = column.replace('"', '""')
+        if self.tables.get(name) == layer:
+            with self._lock:
+                rows = self.con.execute(f'SELECT DISTINCT CAST("{quoted}" AS VARCHAR) FROM "{name}" '
+                                        f'WHERE "{quoted}" IS NOT NULL LIMIT {limit}').fetchall()
+            values = {r[0] for r in rows}
+        elif layer == "silver" and self.s3 is not None:
+            body = self.s3.get_object(Bucket="silver", Key=f"{name}/{name}.parquet")["Body"].read()
+            table = pq.read_table(io.BytesIO(body), columns=[column])
+            values = sources.distinct(table.column(column).to_pylist())
+        else:
+            values = set()
+        self._values[ref] = values
+        return values
+
+    def suggest_links(self, source: dict) -> dict:
+        targets = self.link_targets()
+        return {"source": source["name"], "links": sources.suggest(source, list(targets.values()), self.column_values),
+                "targets": [{k: t[k] for k in ("ref", "data_type", "description", "is_key")} for t in targets.values()]}
+
+    def validate_links(self, source: dict, links: list[dict], feed: str = "") -> dict:
+        targets = self.link_targets()
+        feed = feed or f"gold.{source['name']}"
+        if not re.match(r"^(silver|gold)\.[a-z][a-z0-9_]*$", feed):
+            raise QueryError("Feed dataset must look like gold.<name> or silver.<name>.")
+        checks = sources.validate(source, links, targets, self.column_values)
+        existing: dict[str, list[str]] = {}
+        for t in targets.values():
+            existing.setdefault(t["dataset"], []).append(t["column"])
+        report = self.impact_analysis(sources.to_changes(source, links, feed, existing))
+        status = "fail" if any(c["status"] == "fail" for c in checks) else \
+            "warn" if any(c["status"] == "warn" for c in checks) else "ok"
+        return {"source": source["name"], "feed": feed, "status": status, "checks": checks, "impact": report}
 
     def impact_analysis(self, changes: list[dict], run_id: str | None = None) -> dict:
         """Apply proposed lineage changes to the latest run's lineage without executing anything."""

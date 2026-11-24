@@ -81,6 +81,23 @@ services:
       agent:
         condition: service_healthy
 
+  # Optional: a demo operational database to try "Add data source" with Postgres. Start with:
+  #   docker compose --profile sources up
+  # Connection string from the UI: postgresql://reader:reader@source-db:5432/erp  (table support_tickets)
+  source-db:
+    profiles: ["sources"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: erp
+      POSTGRES_DB: erp
+    volumes:
+      - ./infra/source-db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp"]
+      interval: 5s
+      retries: 20
+
   # Optional: Marquez, the reference OpenLineage UI. Start with:
   #   OPENLINEAGE_URL=http://marquez:5000 docker compose --profile marquez up
   marquez-db:
