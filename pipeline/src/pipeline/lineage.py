@@ -157,7 +157,7 @@ class LineageRecorder:
 
     def tables(self) -> dict[str, pd.DataFrame]:
         """Flatten the recorded run into tables suitable for reporting."""
-        jobs, edges, columns, quality = [], [], [], []
+        jobs, edges, columns, quality, outputs = [], [], [], [], []
         for j in self.jobs:
             jobs.append({
                 "run_id": self.run_id, "job_name": j.name, "layer": j.layer, "description": j.description,
@@ -166,6 +166,8 @@ class LineageRecorder:
                 "status": j.status, "started_at": j.started_at, "ended_at": j.ended_at,
             })
             for out in j.outputs:
+                outputs.append({"run_id": self.run_id, "job_name": j.name, "dataset": out["dataset"],
+                                "rows": out["rows"], "columns": len(out["schema"])})
                 for src in j.inputs:
                     edges.append({"run_id": self.run_id, "job_name": j.name, "source_dataset": src,
                                   "target_dataset": out["dataset"]})
@@ -186,6 +188,7 @@ class LineageRecorder:
             "lineage_runs": pd.DataFrame(runs),
             "lineage_jobs": pd.DataFrame(jobs),
             "lineage_edges": pd.DataFrame(edges),
+            "lineage_outputs": pd.DataFrame(outputs, columns=["run_id", "job_name", "dataset", "rows", "columns"]),
             "lineage_columns": pd.DataFrame(columns),
             "data_quality": pd.DataFrame(quality, columns=["run_id", "job_name", "dataset", "rule", "rows_affected"]),
         }

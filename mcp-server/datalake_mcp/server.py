@@ -91,6 +91,22 @@ def get_contracts() -> str:
 
 
 @mcp.tool()
+def get_run_history(limit: int = 20) -> str:
+    """Pipeline run history, newest first: status, duration, datasets written, gold rows, rows dropped,
+    contract failures and a summary of what changed vs the previous run (datasets added/removed, row-count
+    and schema changes, data-quality and contract changes)."""
+    return _safe(catalog.run_history, limit)
+
+
+@mcp.tool()
+def compare_runs(run_id: str = "", base_run_id: str = "") -> str:
+    """Run-to-run diff. Defaults: the latest run vs the run before it. Per dataset: rows before/after, delta
+    and %, columns added/removed and type changes; plus changed data-quality rule counts and contract checks.
+    Use it for 'what changed since the last run?'."""
+    return _safe(catalog.run_diff, run_id or None, base_run_id or None)
+
+
+@mcp.tool()
 def get_data_dictionary(dataset: str = "", search: str = "") -> str:
     """Data dictionary of every bronze/silver/gold dataset: description, row count and, per column, type,
     business description, null %, distinct count, sample values and upstream columns.

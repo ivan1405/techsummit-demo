@@ -22,6 +22,10 @@ export const api = {
   quality: () => request("/api/quality"),
   dictionary: () => request("/api/dictionary"),
   contracts: () => request("/api/contracts"),
+  runs: (limit = 20) => request(`/api/runs?limit=${limit}`),
+  runDiff: (runId, base) =>
+    request(`/api/runs/diff?run_id=${encodeURIComponent(runId)}&base=${encodeURIComponent(base)}`),
+  runPipeline: () => post("/api/runs", {}),
   stageSource: (source) => post("/api/sources", source),
   suggestLinks: (name) => post("/api/sources/suggest", { name }),
   validateLinks: (name, links, feed) => post("/api/sources/validate", { name, links, feed }),

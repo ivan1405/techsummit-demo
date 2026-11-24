@@ -5,8 +5,9 @@ import Dictionary from "./components/Dictionary.jsx";
 import Impact from "./components/Impact.jsx";
 import Lineage from "./components/Lineage.jsx";
 import Quality from "./components/Quality.jsx";
+import Runs from "./components/Runs.jsx";
 
-const TABS = { chat: "Chat", lineage: "Lineage", dictionary: "Data dictionary", impact: "Impact analysis", quality: "Data quality" };
+const TABS = { chat: "Chat", lineage: "Lineage", dictionary: "Data dictionary", impact: "Impact analysis", quality: "Data quality", runs: "Run history" };
 
 export default function App() {
   const [tab, setTabState] = useState(() => (location.hash.slice(1) in TABS ? location.hash.slice(1) : "chat"));
@@ -66,6 +67,7 @@ export default function App() {
         {tab === "dictionary" && <Dictionary />}
         {tab === "impact" && <Impact />}
         {tab === "quality" && <Quality />}
+        {tab === "runs" && <Runs />}
       </main>
     </div>
   );

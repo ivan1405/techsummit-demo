@@ -25,6 +25,7 @@ TABLE_DOCS = {
     "review_insights": "Gold. AI-enriched reviews (sentiment, topic) with customer and product context.",
     "lineage_runs": "Lineage. One row per pipeline run.",
     "lineage_jobs": "Lineage. One row per job per run: layer, inputs, outputs, rows in/out/dropped, status.",
+    "lineage_outputs": "Lineage. Rows and column count of every dataset written, per job and run.",
     "lineage_edges": "Lineage. Dataset-level edges (source_dataset -> target_dataset) per job and run.",
     "lineage_columns": "Lineage. Column-level lineage with the transformation applied, per run.",
     "data_quality": "Lineage. Rows dropped per data-quality rule, job and run.",
@@ -265,6 +266,87 @@ class Catalog:
                 "amber" if d["freshness"] == "stale" else "green"
         return {"run_id": run_id, "checked_at": now.isoformat(), "datasets": list(datasets.values())}
 
+    # ---- run history & run-to-run diff -------------------------------------------------
+
+    def _snapshots(self, run_ids: list[str]) -> dict[str, dict]:
+        """Per run: rows and schema per dataset, rows dropped per rule, contract check status."""
+        snap = {r: {"rows": {}, "schema": {}, "quality": {}, "contracts": {}} for r in run_ids}
+        if not run_ids:
+            return snap
+        marks = ", ".join("?" * len(run_ids))
+        if "lineage_outputs" in self.tables:
+            for r in self._rows(f"SELECT run_id, dataset, rows FROM lineage_outputs WHERE run_id IN ({marks})", run_ids):
+                snap[r["run_id"]]["rows"][r["dataset"]] = r["rows"]
+        older = [r for r in run_ids if not snap[r]["rows"]]  # runs recorded before lineage_outputs existed
+        if older and "lineage_jobs" in self.tables:
+            marks_old = ", ".join("?" * len(older))
+            for r in self._rows(f"SELECT run_id, outputs, rows_out FROM lineage_jobs WHERE run_id IN ({marks_old})",
+                                older):
+                outs = [o for o in r["outputs"].split(", ") if o]
+                for o in outs:
+                    snap[r["run_id"]]["rows"][o] = r["rows_out"] if len(outs) == 1 else None
+        if "data_dictionary" in self.tables:
+            for r in self._rows(f"SELECT run_id, dataset, column_name, data_type FROM data_dictionary "
+                                f"WHERE run_id IN ({marks}) AND NOT starts_with(column_name, '_') "
+                                "ORDER BY position", run_ids):
+                snap[r["run_id"]]["schema"].setdefault(r["dataset"], {})[r["column_name"]] = r["data_type"]
+        if "data_quality" in self.tables:
+            for r in self._rows(f"SELECT run_id, job_name, rule, SUM(rows_affected) AS n FROM data_quality "
+                                f"WHERE run_id IN ({marks}) GROUP BY ALL", run_ids):
+                snap[r["run_id"]]["quality"][(r["job_name"], r["rule"])] = int(r["n"])
+        if "contract_checks" in self.tables:
+            for r in self._rows(f'SELECT run_id, dataset, "check", status FROM contract_checks WHERE run_id IN ({marks})',
+                                run_ids):
+                snap[r["run_id"]]["contracts"][(r["dataset"], r["check"])] = r["status"]
+        return snap
+
+    def _runs(self) -> list[dict]:
+        self.refresh()
+        if "lineage_runs" not in self.tables:
+            raise QueryError("No lineage recorded yet. Run the pipeline first.")
+        return self._rows("SELECT * FROM lineage_runs ORDER BY started_at DESC", [])
+
+    def run_history(self, limit: int = 20) -> dict:
+        """Latest runs, newest first, each with totals and a summary of what changed vs the run before it."""
+        runs = self._runs()
+        shown = runs[:max(1, limit)]
+        ids = [r["run_id"] for r in runs[:len(shown) + 1]]
+        snap = self._snapshots(ids)
+        out = []
+        for i, r in enumerate(shown):
+            cur = snap[r["run_id"]]
+            prev = snap[ids[i + 1]] if i + 1 < len(ids) else None
+            out.append({
+                "run_id": r["run_id"], "started_at": r["started_at"], "ended_at": r.get("ended_at"),
+                "status": r.get("status"), "trigger": r.get("trigger") or "manual", "jobs": r.get("jobs"),
+                "duration_s": _seconds(r["started_at"], r.get("ended_at")),
+                "datasets": len(cur["rows"]),
+                "gold_rows": sum(n or 0 for d, n in cur["rows"].items() if d.startswith("gold.")),
+                "rows_dropped": sum(cur["quality"].values()),
+                "contract_failures": sum(st == "fail" for st in cur["contracts"].values()),
+                "base_run_id": ids[i + 1] if prev else None,
+                "changes": _diff(prev, cur)["summary"] if prev else None,
+            })
+        return {"total_runs": len(runs), "runs": out}
+
+    def run_diff(self, run_id: str | None = None, base_run_id: str | None = None) -> dict:
+        """Compare a run (default: latest) with a base run (default: the run before it)."""
+        runs = self._runs()
+        order = [r["run_id"] for r in runs]
+        run_id = run_id or order[0]
+        if run_id not in order:
+            raise QueryError(f"Unknown run {run_id}.")
+        if not base_run_id:
+            i = order.index(run_id)
+            if i + 1 >= len(order):
+                raise QueryError("This is the first run: there is nothing to compare it with.")
+            base_run_id = order[i + 1]
+        if base_run_id not in order:
+            raise QueryError(f"Unknown run {base_run_id}.")
+        snap = self._snapshots([run_id, base_run_id])
+        meta = {r["run_id"]: {k: r.get(k) for k in ("run_id", "started_at", "ended_at", "status")} for r in runs}
+        return {"run": meta[run_id], "base": meta[base_run_id], **_diff(snap[base_run_id], snap[run_id])}
+
     # ---- data dictionary & what-if impact -----------------------------------------------
 
     def data_dictionary(self, dataset: str | None = None, search: str | None = None,
@@ -386,6 +468,57 @@ class Catalog:
         except impact.ChangeError as exc:
             raise QueryError(str(exc)) from exc
         return {"run_id": run_id, **report}
+
+
+LAYER_ORDER = {"source": 0, "bronze": 1, "silver": 2, "gold": 3}
+
+
+def _seconds(start: str | None, end: str | None) -> float | None:
+    try:
+        return round((datetime.fromisoformat(end) - datetime.fromisoformat(start)).total_seconds(), 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def _diff(base: dict, cur: dict) -> dict:
+    """Dataset rows/schema, data-quality and contract differences between two run snapshots."""
+    datasets = []
+    for d in sorted(set(base["rows"]) | set(cur["rows"]) | set(base["schema"]) | set(cur["schema"]),
+                    key=lambda d: (LAYER_ORDER.get(d.split(".", 1)[0], 9), d)):
+        b_rows, c_rows = base["rows"].get(d), cur["rows"].get(d)
+        b_cols, c_cols = base["schema"].get(d, {}), cur["schema"].get(d, {})
+        in_base, in_cur = d in base["rows"] or d in base["schema"], d in cur["rows"] or d in cur["schema"]
+        delta = c_rows - b_rows if None not in (b_rows, c_rows) else None
+        entry = {
+            "dataset": d, "layer": d.split(".", 1)[0], "rows_base": b_rows, "rows": c_rows, "rows_delta": delta,
+            "rows_pct": round(100 * delta / b_rows, 1) if delta is not None and b_rows else None,
+            "columns_added": [c for c in c_cols if c not in b_cols] if in_base else [],
+            "columns_removed": [c for c in b_cols if c not in c_cols] if in_cur else [],
+            "type_changes": [{"column": c, "from": b_cols[c], "to": t} for c, t in c_cols.items()
+                             if c in b_cols and b_cols[c] != t],
+        }
+        entry["status"] = ("added" if not in_base else "removed" if not in_cur else
+                           "changed" if delta or entry["columns_added"] or entry["columns_removed"]
+                           or entry["type_changes"] else "unchanged")
+        datasets.append(entry)
+    quality = [{"job_name": j, "rule": r, "base": base["quality"].get((j, r), 0), "current": cur["quality"].get((j, r), 0)}
+               for j, r in sorted(set(base["quality"]) | set(cur["quality"]))]
+    quality = [{**q, "delta": q["current"] - q["base"]} for q in quality if q["current"] != q["base"]]
+    contracts = [{"dataset": d, "check": c, "base": base["contracts"].get((d, c)), "current": cur["contracts"].get((d, c))}
+                 for d, c in sorted(set(base["contracts"]) | set(cur["contracts"]))]
+    contracts = [c for c in contracts if c["base"] != c["current"]]
+    count = lambda st: sum(d["status"] == st for d in datasets)  # noqa: E731
+    return {
+        "summary": {
+            "datasets_added": count("added"), "datasets_removed": count("removed"),
+            "row_changes": sum(bool(d["rows_delta"]) for d in datasets),
+            "schema_changes": sum(len(d["columns_added"]) + len(d["columns_removed"]) + len(d["type_changes"])
+                                  for d in datasets if d["status"] == "changed"),
+            "quality_changes": len(quality),
+            "contract_changes": len(contracts),
+        },
+        "datasets": datasets, "quality": quality, "contracts": contracts,
+    }
 
 
 def _reachable(edges: list[dict], start: str, upstream: bool) -> set[str]:
