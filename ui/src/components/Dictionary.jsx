@@ -16,6 +16,7 @@ export default function Dictionary({ onAsk }) {
   const [search, setSearch] = useState("");
   const [layer, setLayer] = useState("all");
   const [showMeta, setShowMeta] = useState(false);
+  const [piiOnly, setPiiOnly] = useState(false);
   const [adding, setAdding] = useState(false);
 
   const [version, setVersion] = useState(0);
@@ -41,12 +42,13 @@ export default function Dictionary({ onAsk }) {
         const columns = d.columns.filter(
           (c) =>
             (showMeta || !c.column_name.startsWith("_")) &&
+            (!piiOnly || c.pii) &&
             (!needle || tableHit || [c.column_name, c.description, c.upstream].some((t) => matches(t, needle))),
         );
         return { ...d, columns };
       })
       .filter((d) => d.columns.length);
-  }, [data, search, layer, showMeta]);
+  }, [data, search, layer, showMeta, piiOnly]);
 
   if (error) return <p className="error-text">{error}</p>;
   if (!data) return <p className="muted">Loading…</p>;
@@ -79,6 +81,10 @@ export default function Dictionary({ onAsk }) {
         <label className="check">
           <input type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} />
           Metadata columns
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={piiOnly} onChange={(e) => setPiiOnly(e.target.checked)} />
+          Personal data only
         </label>
         <button className="primary" aria-expanded={adding} onClick={() => setAdding(!adding)}>
           + Add data source
@@ -116,6 +122,11 @@ export default function Dictionary({ onAsk }) {
                   <tr key={c.column_name}>
                     <td className="col-name">
                       <code>{c.column_name}</code>
+                      {c.pii && (
+                        <span className="pii-tag" title={`Personal data (${c.pii}), from ${c.pii_origin}. Masked for readers.`}>
+                          PII · {c.pii}
+                        </span>
+                      )}
                       <button className="ask" title="Ask the assistant about this column"
                               aria-label={`Ask about ${d.dataset}.${c.column_name}`}
                               onClick={() => onAsk(columnQuestion(d.dataset, c.column_name))}>?</button>
