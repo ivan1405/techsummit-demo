@@ -317,10 +317,10 @@ def to_changes(source: dict, links: list[dict], feed: str, existing: dict[str, l
     bronze, silver = f"bronze.{name}", f"silver.{name}"
     cols = [c["column_name"] for c in source["columns"]]
     changes = [{"type": "add_dataset", "dataset": bronze, "inputs": [dataset]}]
-    changes += [{"type": "add_column", "dataset": bronze, "column": c, "transformation": f"landed as-is from {dataset}"}
+    changes += [{"type": "add_column", "dataset": bronze, "column": c, "if_missing": True, "transformation": f"landed as-is from {dataset}"}
                 for c in cols]
     changes.append({"type": "add_dataset", "dataset": silver, "inputs": [bronze]})
-    changes += [{"type": "add_column", "dataset": silver, "column": c, "sources": [f"{bronze}.{c}"],
+    changes += [{"type": "add_column", "dataset": silver, "column": c, "if_missing": True, "sources": [f"{bronze}.{c}"],
                  "transformation": "typed and cleaned"} for c in cols]
     joins = [lk for lk in links if lk.get("relation") == "join_key" and lk.get("target")]
     inputs = [silver] + list(dict.fromkeys(lk["target"].rsplit(".", 1)[0] for lk in joins))
@@ -331,6 +331,6 @@ def to_changes(source: dict, links: list[dict], feed: str, existing: dict[str, l
         if col not in cols or lk.get("relation") == "join_key" or col in feed_cols:
             continue
         how = f"same meaning as {lk['target']}" if lk.get("relation") == "maps_to" else f"new attribute from {name}"
-        changes.append({"type": "add_column", "dataset": feed, "column": col, "sources": [f"{silver}.{col}"],
+        changes.append({"type": "add_column", "dataset": feed, "column": col, "if_missing": True, "sources": [f"{silver}.{col}"],
                         "transformation": how})
     return changes

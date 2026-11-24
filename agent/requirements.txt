@@ -4,3 +4,4 @@ langgraph==1.2.24
 langchain-mcp-adapters==0.3.2
 langchain-openai==1.8.5
 langchain-anthropic==1.7.12
+httpx==0.28.1

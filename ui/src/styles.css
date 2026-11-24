@@ -179,6 +179,12 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .origin { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; padding: 0 6px; border-radius: 4px; border: 1px solid var(--hub-line); color: var(--hub-muted); }
 .origin.ai { border-color: var(--hub-red); color: var(--hub-red-strong); }
 .origin.edited { border-color: var(--hub-steel-300); color: var(--hub-steel-700); }
+.implemented p { margin: 6px 0; }
+.button-link { display: inline-block; border: 1px solid var(--hub-line); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--hub-body); text-decoration: none; background: var(--hub-surface); }
+.button-link:hover { border-color: var(--hub-red); }
+.registered { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 8px; font-size: 12px; }
+.registered button { background: none; border: none; color: var(--hub-muted); padding: 0 2px; font-size: 13px; }
+.registered button:hover { color: var(--hub-red-strong); }
 .source-graph { border: 1px solid var(--hub-line); border-radius: 8px; margin: 10px 0; overflow-x: auto; }
 
 @media (max-width: 1100px) {

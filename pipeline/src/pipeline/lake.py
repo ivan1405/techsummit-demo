@@ -22,7 +22,7 @@ class Lake:
 
     def ensure_buckets(self) -> None:
         s = self.settings
-        for bucket in (s.bronze_bucket, s.silver_bucket, s.gold_bucket, s.lineage_bucket):
+        for bucket in (s.bronze_bucket, s.silver_bucket, s.gold_bucket, s.lineage_bucket, s.registry_bucket):
             try:
                 self.s3.head_bucket(Bucket=bucket)
             except ClientError:

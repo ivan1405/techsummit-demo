@@ -108,3 +108,8 @@ def test_validate_reports_orphans_bad_targets_and_previews_impact(catalog, ticke
     assert edges[("silver.customers", "gold.customer_tickets")] == "added"
     assert edges[("silver.tickets", "gold.customer_tickets")] == "added"
     assert res["impact"]["warnings"] == []
+
+
+def test_link_targets_exclude_the_sources_own_onboarded_columns(catalog):
+    assert not any(r.startswith("silver.customers.") for r in catalog.link_targets(exclude="customers"))
+    assert "silver.customers.customer_id" in catalog.link_targets()

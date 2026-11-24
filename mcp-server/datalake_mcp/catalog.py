@@ -256,7 +256,7 @@ class Catalog:
             name = r["dataset"].split(".", 1)[1]
             entry = out.setdefault(r["dataset"], {
                 "dataset": r["dataset"], "layer": r["layer"], "rows": rows_out.get(r["dataset"]),
-                "description": TABLE_DOCS.get(name) if r["layer"] == "gold" else docs.get(r["dataset"], ""),
+                "description": (TABLE_DOCS.get(name) if r["layer"] == "gold" else None) or docs.get(r["dataset"], ""),
                 "columns": [],
             })
             haystack = " ".join(str(r[k] or "") for k in ("dataset", "column_name", "description", "upstream"))
@@ -269,14 +269,17 @@ class Catalog:
 
     # ---- candidate sources: linking & validation ---------------------------------------------
 
-    def link_targets(self) -> dict[str, dict]:
-        """Silver and gold business columns a new source can link to, keyed by 'layer.dataset.column'."""
+    def link_targets(self, exclude: str = "") -> dict[str, dict]:
+        """Silver and gold business columns a new source can link to, keyed by 'layer.dataset.column'.
+
+        exclude: a source name whose own onboarded tables and columns are left out (re-onboarding)."""
+        own = (f"silver.{exclude}.", f"bronze.{exclude}.") if exclude else ()
         out = {}
         for d in self.data_dictionary()["datasets"]:
-            if d["layer"] not in ("silver", "gold"):
+            if d["layer"] not in ("silver", "gold") or (exclude and d["dataset"] == f"silver.{exclude}"):
                 continue
             for c in d["columns"]:
-                if c["column_name"].startswith("_"):
+                if c["column_name"].startswith("_") or (own and (c["upstream"] or "").startswith(own)):
                     continue
                 ref = f'{d["dataset"]}.{c["column_name"]}'
                 out[ref] = {"ref": ref, "dataset": d["dataset"], "column": c["column_name"],
@@ -306,12 +309,12 @@ class Catalog:
         return values
 
     def suggest_links(self, source: dict) -> dict:
-        targets = self.link_targets()
+        targets = self.link_targets(exclude=source["name"])
         return {"source": source["name"], "links": sources.suggest(source, list(targets.values()), self.column_values),
                 "targets": [{k: t[k] for k in ("ref", "data_type", "description", "is_key")} for t in targets.values()]}
 
     def validate_links(self, source: dict, links: list[dict], feed: str = "") -> dict:
-        targets = self.link_targets()
+        targets = self.link_targets(exclude=source["name"])
         feed = feed or f"gold.{source['name']}"
         if not re.match(r"^(silver|gold)\.[a-z][a-z0-9_]*$", feed):
             raise QueryError("Feed dataset must look like gold.<name> or silver.<name>.")

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 import ImpactGraph, { Legend } from "./ImpactGraph.jsx";
 
@@ -19,7 +19,7 @@ function download(payload) {
   URL.revokeObjectURL(a.href);
 }
 
-export default function AddSource({ onClose }) {
+export default function AddSource({ onClose, onImplemented }) {
   const [form, setForm] = useState({ kind: "file", name: "", filename: "", content: "", url: "", table: "", query: "" });
   const [source, setSource] = useState(null);
   const [links, setLinks] = useState(null);
@@ -27,6 +27,7 @@ export default function AddSource({ onClose }) {
   const [feed, setFeed] = useState("");
   const [result, setResult] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [implemented, setImplemented] = useState(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState(null);
 
@@ -80,9 +81,18 @@ export default function AddSource({ onClose }) {
       setResult(await api.validateLinks(source.name, payload, feed));
     });
 
+  const accept = () =>
+    run("Implementing: landing the source and re-running the medallion pipeline…", async () => {
+      const payload = links.map(({ source_column, relation, target }) => ({ source_column, relation, target: relation === "new" ? null : target }));
+      const res = await api.acceptSource({ ...form, name: source.name, links: payload, feed: result.feed });
+      setImplemented(res);
+      onImplemented?.();
+    });
+
   const edit = (i, patch) => {
     setLinks(links.map((l, j) => (j === i ? { ...l, ...patch, origin: "edited" } : l)));
     setResult(null);
+    setImplemented(null);
   };
 
   return (
@@ -249,6 +259,76 @@ export default function AddSource({ onClose }) {
           </div>
         </div>
       )}
+
+      {result && (
+        <div className="wizard-step">
+          <h4>5. Implement</h4>
+          {!implemented && (
+            <>
+              <p className="muted">
+                Saves the source and confirmed links to the lake registry and re-runs the pipeline: <code>bronze.{source.name}</code> →{" "}
+                <code>silver.{source.name}</code> → <code>{result.feed}</code>, with lineage, dictionary and data quality.
+              </p>
+              {result.status === "fail" && <p className="error-text" role="alert">Fix the failing checks before implementing.</p>}
+              <button className="primary" onClick={accept} disabled={!!busy || result.status === "fail"}>
+                {result.status === "warn" ? "Accept with warnings & implement" : "Accept & implement"}
+              </button>
+            </>
+          )}
+          {implemented && (
+            <div className="implemented" role="status">
+              <p>
+                <span className="status-pill status-added">implemented</span> Pipeline run <code>{implemented.run.run_id.slice(0, 8)}</code> built{" "}
+                <code>bronze.{source.name}</code>, <code>silver.{source.name}</code> ({implemented.run.silver[source.name]} rows) and{" "}
+                <code>{implemented.source.feed}</code> ({implemented.run.gold[implemented.source.feed.split(".")[1]]} rows).
+              </p>
+              <div className="actions">
+                <a className="button-link" href="#lineage">Open lineage</a>
+                <button onClick={onClose}>Close and view dictionary</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </section>
+  );
+}
+
+export function RegisteredSources({ version, onChange }) {
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState("");
+
+  useEffect(() => {
+    api.registeredSources().then(setItems).catch((e) => setError(e.message));
+  }, [version]);
+
+  async function remove(name) {
+    if (!window.confirm(`Remove ${name} from the pipeline? Its bronze, silver and gold data is dropped on the next run.`)) return;
+    setBusy(name);
+    try {
+      await api.removeSource(name);
+      onChange?.();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  if (!items.length && !error) return null;
+  return (
+    <div className="registered" aria-label="Onboarded sources">
+      <span className="muted">Onboarded sources:</span>
+      {items.map((s) => (
+        <span key={s.name} className="chip source">
+          {s.name} → {s.feed}
+          <button aria-label={`Remove ${s.name}`} onClick={() => remove(s.name)} disabled={!!busy}>
+            {busy === s.name ? "…" : "×"}
+          </button>
+        </span>
+      ))}
+      {error && <span className="error-text">{error}</span>}
+    </div>
   );
 }

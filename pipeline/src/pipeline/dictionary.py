@@ -124,7 +124,8 @@ def describe(dataset: str, column: str) -> str:
     return DESCRIPTIONS.get(dataset, {}).get(column) or METADATA.get(column, "")
 
 
-def profile(dataset: str, df: pd.DataFrame, lineage: ColumnLineage, run_id: str) -> list[dict]:
+def profile(dataset: str, df: pd.DataFrame, lineage: ColumnLineage, run_id: str,
+            descriptions: dict[str, str] | None = None) -> list[dict]:
     """One dictionary row per column of a table, with its profile and direct upstream columns."""
     rows = []
     for pos, (col, dtype) in enumerate(df.dtypes.items()):
@@ -138,7 +139,7 @@ def profile(dataset: str, df: pd.DataFrame, lineage: ColumnLineage, run_id: str)
             "column_name": col,
             "position": pos,
             "data_type": "string" if str(dtype) in ("object", "str", "string") else str(dtype),
-            "description": describe(dataset, col),
+            "description": (descriptions or {}).get(col) or describe(dataset, col),
             "null_pct": round(float(values.isna().mean()) * 100, 1) if len(df) else 0.0,
             "distinct_count": int(values.nunique(dropna=True)),
             "sample_values": ", ".join(s[:40] for s in samples),

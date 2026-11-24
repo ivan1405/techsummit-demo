@@ -38,6 +38,27 @@ services:
         condition: service_healthy
     restart: "no"
 
+  pipeline-api:
+    build: ./pipeline
+    command: ["python", "-m", "pipeline.serve"]
+    environment:
+      <<: *llm-env
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: lakeadmin
+      S3_SECRET_KEY: lakeadmin-secret
+      SOURCES_DIR: /data/sources
+      OPENLINEAGE_URL: ${OPENLINEAGE_URL:-}
+    volumes:
+      - ./data/sources:/data/sources:ro
+    depends_on:
+      pipeline:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
   mcp-server:
     build: ./mcp-server
     environment:
@@ -62,10 +83,13 @@ services:
     environment:
       <<: *llm-env
       MCP_URL: http://mcp-server:8000/mcp
+      PIPELINE_URL: http://pipeline-api:8090
     ports:
       - "8080:8080"
     depends_on:
       mcp-server:
+        condition: service_healthy
+      pipeline-api:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')"]

@@ -179,3 +179,9 @@ def test_impact_new_source_is_added_without_warning(dict_catalog):
 def test_impact_rejects_unknown_columns(dict_catalog):
     with pytest.raises(QueryError, match="Unknown column"):
         dict_catalog.impact_analysis([{"type": "remove_column", "dataset": "gold.sales", "column": "nope"}])
+
+
+def test_impact_if_missing_skips_existing_columns(dict_catalog):
+    rep = dict_catalog.impact_analysis([{"type": "add_column", "dataset": "gold.sales", "column": "amount",
+                                         "if_missing": True}])
+    assert rep["summary"]["added"] == 0
