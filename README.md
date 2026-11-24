@@ -86,7 +86,13 @@ In the **Data dictionary** tab, **+ Add data source** walks through:
 3. **Linkages:** each column is suggested as a `join_key`, `maps_to` an existing column, or a `new` attribute. Candidates come from name similarity and real value overlap with silver/gold data; with an LLM configured the model reviews them and explains each choice. Edit any relation or target.
 4. **Validate:** join keys are checked against the data (% of values found, orphan examples, whether the target is unique), and the impact graph shows the planned `source → bronze → silver → feed` lineage. Export it all as JSON.
 
-Nothing is ingested: staged sources live in the MCP server's memory only. MCP tools: `stage_source`, `get_staged_source`, `suggest_source_links`, `validate_source_links` (not offered to the chat agent).
+5. **Accept & implement** (disabled while any check fails): the agent re-validates, then the `pipeline-api` service saves the spec (and file content) to `s3://registry/sources/` and re-runs the pipeline. Onboarded sources then flow through the medallion layers on every run:
+   - `bronze.<name>`: the file as delivered (databases are snapshotted to JSONL).
+   - `silver.<name>`: trimmed, typed, deduplicated; rows missing every join key are dropped (recorded in data quality).
+   - Feed into a **new** gold dataset: source rows LEFT JOINed to each join-key target (clashing target columns prefixed). Feed into an **existing** gold dataset (e.g. `gold.customer_360`): the source's attributes are added via a join key the dataset already has; the key must be unique in the source.
+   - Lineage, column lineage, dictionary and data quality are recorded like the core sources. Remove an onboarded source with its × chip in the dictionary.
+
+Until accepted, staged sources live in the MCP server's memory only. Database connection strings are stored in the registry as entered (masked in the API); use a read-only demo user. MCP tools: `stage_source`, `get_staged_source`, `suggest_source_links`, `validate_source_links` (not offered to the chat agent).
 
 **Marquez (optional):** to also see the lineage in the reference OpenLineage UI:
 
