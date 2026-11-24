@@ -1,0 +1,12 @@
+<!-- id: 1002; title: ERP support tickets (support_tickets); space: DATA; labels: data-source, erp, customer-care -->
+<p>Owner: <strong>Customer Care</strong>. Table <code>support_tickets</code> in the ERP Postgres read replica (<code>erp</code> database).</p>
+<h2>Columns</h2>
+<table><tbody><tr><th>Column</th><th>Type</th><th>Description</th><th>Links to</th></tr>
+<tr><td>ticket_no</td><td>text</td><td>Ticket number, unique.</td><td></td></tr>
+<tr><td>cust</td><td>text</td><td>Customer the ticket was raised for (legacy column name).</td><td>Join key: silver.customers.customer_id</td></tr>
+<tr><td>order_ref</td><td>text</td><td>Order the ticket is about; empty for general enquiries.</td><td>silver.orders.order_id</td></tr>
+<tr><td>channel</td><td>text</td><td>chat, email or phone.</td><td></td></tr>
+<tr><td>opened_on</td><td>date</td><td>Date the ticket was opened.</td><td></td></tr>
+<tr><td>priority</td><td>text</td><td>low, medium or high, set by the agent.</td><td></td></tr>
+<tr><td>refund_eur</td><td>numeric(8,2)</td><td>Goodwill refund granted, in EUR.</td><td></td></tr>
+</tbody></table>
