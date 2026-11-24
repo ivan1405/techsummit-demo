@@ -107,7 +107,7 @@ def check_spec(spec: dict) -> dict:
             raise OnboardError(f"Invalid relation for {lk['source_column']}.")
         if lk["relation"] != "new" and not re.match(r"^(silver|gold)\.\w+\.\w+$", lk.get("target") or ""):
             raise OnboardError(f"{lk['source_column']}: target must be a silver/gold column.")
-    keep = ("name", "kind", "filename", "url", "table", "query", "connection", "label")
+    keep = ("name", "kind", "filename", "url", "table", "query", "connection", "label", "plan_id")
     return {**{k: spec.get(k, "") for k in keep}, "feed": feed, "links": links,
             "accepted_at": datetime.now(timezone.utc).isoformat()}
 
@@ -272,7 +272,8 @@ def descriptions(spec: dict, columns: list[str]) -> dict[str, str]:
         lk = by_col.get(c, {"relation": "new"})
         what = {"join_key": f"join key to {lk.get('target')}", "maps_to": f"same meaning as {lk.get('target')}",
                 "new": "new attribute"}[lk["relation"]]
-        out[c] = f"From onboarded source {label(spec)}: {what}."
+        doc = str(lk.get("description") or "").strip().rstrip(".")
+        out[c] = (f"{doc}. " if doc else "") + f"From onboarded source {label(spec)}: {what}."
     return out
 
 

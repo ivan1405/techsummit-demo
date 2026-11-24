@@ -1,0 +1,11 @@
+<!-- id: 1004; title: Marketing campaign sends (planned); space: DATA; labels: data-source, marketing, planned -->
+<p>Owner: <strong>Marketing</strong>. <em>Planned for Q1</em>: the email platform will export one row per campaign send. No data exists yet; this page is the agreed contract.</p>
+<table><tbody><tr><th>Column</th><th>Type</th><th>Description</th><th>Links to</th></tr>
+<tr><td>send_id</td><td>varchar</td><td>Unique id of the send.</td><td></td></tr>
+<tr><td>campaign</td><td>varchar</td><td>Campaign name.</td><td></td></tr>
+<tr><td>customer_id</td><td>varchar</td><td>Recipient.</td><td>Join key: silver.customers.customer_id</td></tr>
+<tr><td>sent_at</td><td>timestamp</td><td>When the email was sent.</td><td></td></tr>
+<tr><td>opened</td><td>boolean</td><td>Recipient opened the email.</td><td></td></tr>
+<tr><td>clicked</td><td>boolean</td><td>Recipient clicked a link.</td><td></td></tr>
+<tr><td>cost_eur</td><td>decimal(8,4)</td><td>Send cost in EUR.</td><td></td></tr>
+</tbody></table>

@@ -1,0 +1,11 @@
+<!-- id: 1001; title: Parser Rewards loyalty feed; space: DATA; labels: data-source, crm, loyalty -->
+<p>Owner: <strong>CRM team</strong>. Daily JSON export of the Parser Rewards loyalty programme (<code>loyalty.json</code>). Members are nested under <code>members[].member</code>.</p>
+<h2>Schema</h2>
+<table><tbody><tr><th>Column</th><th>Type</th><th>Description</th><th>Links to</th></tr>
+<tr><td>member.customer_id</td><td>string</td><td>CRM customer number of the member.</td><td>Join key: silver.customers.customer_id</td></tr>
+<tr><td>member.tier</td><td>string</td><td>Programme tier: bronze, silver or gold.</td><td></td></tr>
+<tr><td>points</td><td>integer</td><td>Points balance at export time.</td><td></td></tr>
+<tr><td>email</td><td>string</td><td>Contact email given at sign-up. Not kept in sync with the CRM email.</td><td></td></tr>
+<tr><td>joined</td><td>date</td><td>Date the customer joined the programme.</td><td></td></tr>
+</tbody></table>
+<p>Refresh: daily at 02:00 UTC. PII: email.</p>

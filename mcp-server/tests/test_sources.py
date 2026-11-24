@@ -113,3 +113,49 @@ def test_validate_reports_orphans_bad_targets_and_previews_impact(catalog, ticke
 def test_link_targets_exclude_the_sources_own_onboarded_columns(catalog):
     assert not any(r.startswith("silver.customers.") for r in catalog.link_targets(exclude="customers"))
     assert "silver.customers.customer_id" in catalog.link_targets()
+
+
+DOCS = [
+    {"name": "Cust", "type": "text", "description": "CRM customer number", "links_to": "Join key: silver.customers.customer_id"},
+    {"name": "country", "type": "text", "description": "ISO country", "links_to": "silver.customers.country"},
+    {"name": "priority", "type": "text", "description": "Agent-set urgency", "links_to": ""},
+    {"name": "sla_hours", "type": "integer", "description": "Target resolution time"},
+]
+
+
+def test_documented_hints_override_heuristics_and_report_coverage(catalog):
+    store = sources.SourceStore()
+    rows = [{"ticket_id": f"T{i}", "cust": CUSTOMERS[i], "country": "ES", "priority": "high"} for i in range(10)]
+    store.stage("tickets", "json", "tickets.json", sources.to_table(rows), DOCS, {"title": "Tickets page", "url": "u"})
+    source = store.get("tickets")
+    res = catalog.suggest_links(source)
+    links = {lk["source_column"]: lk for lk in res["links"]}
+    assert links["cust"]["reason"].startswith("Confirmed by Tickets page")
+    assert links["cust"]["description"] == "CRM customer number"
+    assert links["country"]["relation"] == "maps_to"
+    assert res["docs"]["missing_in_data"] == ["sla_hours"] and res["docs"]["undocumented"] == ["ticket_id"]
+    checks = catalog.validate_links(source, [{"source_column": "cust", "relation": "join_key",
+                                              "target": "silver.customers.customer_id"}])["checks"]
+    assert checks[-1] == {"source_column": "sla_hours", "relation": "documented", "target": None, "status": "warn",
+                          "overlap": None, "message": "Documented in Tickets page but not in the data."}
+
+
+def test_schema_only_source_links_by_documentation_and_never_checks_values(catalog):
+    store = sources.SourceStore()
+    columns = [{"name": "campaign_id", "type": "varchar"}, {"name": "customer_ref", "type": "text"},
+               {"name": "cost_eur", "type": "decimal(8,2)"}, {"name": "opened", "type": "boolean"}]
+    docs = [{"name": "customer_ref", "description": "Who got it", "links_to": "join silver.customers.customer_id"}]
+    entry = store.stage("campaigns", "schema", "campaigns.confluence", sources.schema_table(columns), docs)
+    assert entry["rows"] == 0 and entry["schema_only"]
+    assert {c["column_name"]: c["data_type"] for c in entry["columns"]} == {
+        "campaign_id": "string", "customer_ref": "string", "cost_eur": "float64", "opened": "bool"}
+    source = store.get("campaigns")
+    links = {lk["source_column"]: lk for lk in catalog.suggest_links(source)["links"]}
+    assert (links["customer_ref"]["relation"], links["customer_ref"]["target"]) == ("join_key", "silver.customers.customer_id")
+    res = catalog.validate_links(source, [{"source_column": "customer_ref", "relation": "join_key",
+                                           "target": "silver.customers.customer_id"}, {"source_column": "opened", "relation": "new"}])
+    check = res["checks"][0]
+    assert check["status"] == "warn" and check["overlap"] is None and check["message"] == sources.SCHEMA_ONLY
+    assert res["status"] == "warn"
+    with pytest.raises(sources.SourceError):
+        sources.schema_table([])

@@ -341,7 +341,8 @@ class Catalog:
 
     def suggest_links(self, source: dict) -> dict:
         targets = self.link_targets(exclude=source["name"])
-        return {"source": source["name"], "links": sources.suggest(source, list(targets.values()), self.column_values),
+        links = sources.suggest(source, list(targets.values()), self.column_values)
+        return {"source": source["name"], "links": links, "docs": sources.apply_docs(links, source, targets),
                 "targets": [{k: t[k] for k in ("ref", "data_type", "description", "is_key")} for t in targets.values()]}
 
     def validate_links(self, source: dict, links: list[dict], feed: str = "") -> dict:

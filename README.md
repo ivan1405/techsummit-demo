@@ -89,12 +89,21 @@ In the **Data dictionary** tab, **+ Add data source** walks through:
 2. **Profile:** types, nulls, distinct counts and samples, like the dictionary.
 3. **Linkages:** each column is suggested as a `join_key`, `maps_to` an existing column, or a `new` attribute. Candidates come from name similarity and real value overlap with silver/gold data; with an LLM configured the model reviews them and explains each choice. Edit any relation or target.
 4. **Validate:** join keys are checked against the data (% of values found, orphan examples, whether the target is unique), and the impact graph shows the planned `source → bronze → silver → feed` lineage. Export it all as JSON.
-
-5. **Accept & implement** (disabled while any check fails): the agent re-validates, then the `pipeline-api` service saves the spec (and file content) to `s3://registry/sources/` and re-runs the pipeline. Onboarded sources then flow through the medallion layers on every run:
+5. **Implementation plan:** layers with expected rows, joins with expected matches, data-quality rules, the data contract (new, or the existing one extended), impacted datasets and warnings. Download it as Markdown or JSON, or publish it to Confluence. Tick the approval box to enable implementing.
+6. **Accept & implement** (disabled while any check fails or the plan isn't approved): the agent rebuilds the plan from the submitted links and refuses if its id differs from the approved one (HTTP 409), then the `pipeline-api` service saves the spec (and file content) to `s3://registry/sources/` and re-runs the pipeline. Onboarded sources then flow through the medallion layers on every run:
    - `bronze.<name>`: the file as delivered (databases are snapshotted to JSONL).
    - `silver.<name>`: trimmed, typed, deduplicated; rows missing every join key are dropped (recorded in data quality).
    - Feed into a **new** gold dataset: source rows LEFT JOINed to each join-key target (clashing target columns prefixed). Feed into an **existing** gold dataset (e.g. `gold.customer_360`): the source's attributes are added via a join key the dataset already has; the key must be unique in the source.
    - Lineage, column lineage, dictionary and data quality are recorded like the core sources. Remove an onboarded source with its × chip in the dictionary.
+
+### Confluence
+
+Source documentation can come from Confluence: search pages by text and label (default `data-source`) in `CONFLUENCE_SPACE`. Any page table with a **Column** header and a **Type** or **Description** header is read as a schema; an optional **Links to** column naming a `silver.`/`gold.` column (e.g. `Join key: silver.customers.customer_id`) is used as a link hint.
+
+- **Attach documentation** to a file, JSON or connection source: descriptions show in the profile and linkages, documented links confirm or override the heuristic ones (and are given to the LLM), coverage lists undocumented columns and documented columns missing from the data, and accepted descriptions go into the data dictionary.
+- **Confluence page** as the source: a documented-only source with no data yet. Links are checked by name and type, the plan and impact graph show what would change, and implementing stays blocked until real data is connected.
+
+Without credentials the stack uses the bundled **mock Confluence** (`confluence-mock`, http://localhost:8095) with pages for the loyalty, support tickets, returns and a planned marketing campaigns source; published plans stay in its memory. For Confluence Cloud set `CONFLUENCE_URL=https://<site>.atlassian.net`, `CONFLUENCE_EMAIL` and `CONFLUENCE_API_TOKEN` in `.env`.
 
 ### Saved connections
 

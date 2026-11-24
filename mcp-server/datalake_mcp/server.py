@@ -115,7 +115,8 @@ def analyze_change_impact(changes: list[dict]) -> str:
     return _safe(catalog.impact_analysis, changes)
 
 
-def _stage(kind: str, name: str, filename: str, content: str, url: str, table: str, query: str) -> dict:
+def _stage(kind: str, name: str, filename: str, content: str, url: str, table: str, query: str,
+           docs: list[dict] | None, doc: dict | None) -> dict:
     if kind == "file":
         label, data = filename, sources.read_file(filename, content)
     elif kind == "json":
@@ -124,22 +125,31 @@ def _stage(kind: str, name: str, filename: str, content: str, url: str, table: s
         label, data = f"{name}.db", sources.read_db(url, table, query)
     elif kind == "records":
         label, data = filename or f"{name}.db", sources.read_json(content)
+    elif kind == "schema":
+        try:
+            columns = json.loads(content or "[]")
+        except json.JSONDecodeError as exc:
+            raise sources.SourceError(f"Invalid schema JSON: {exc}") from exc
+        label, data = filename or f"{name}.schema", sources.schema_table(columns)
     else:
-        raise sources.SourceError("kind must be file, json, database or records.")
-    return staged.stage(name, kind, label, data)
+        raise sources.SourceError("kind must be file, json, database, records or schema.")
+    return staged.stage(name, kind, label, data, docs, doc)
 
 
 @mcp.tool()
 def stage_source(kind: str, name: str, filename: str = "", content: str = "", url: str = "", table: str = "",
-                 query: str = "") -> str:
+                 query: str = "", docs: list[dict] | None = None, doc: dict | None = None) -> str:
     """Stage and profile a candidate data source WITHOUT ingesting it.
 
     kind='file' (filename .csv/.json/.jsonl + content), kind='json' (content = a JSON object or array)
     or kind='database' (url postgresql://... or sqlite:///..., plus a table or a single SELECT query;
-    read-only, at most 5000 rows), or kind='records' (content = JSON array already read from a named
-    connection, filename = its source label). name is the snake_case dataset name, e.g. 'support_tickets'.
+    read-only, at most 5000 rows), kind='records' (content = JSON array already read from a named
+    connection, filename = its source label) or kind='schema' (content = JSON [{name, type}] of a source
+    that is only documented so far: links are checked by name and type, not values).
+    docs: optional documented columns [{name, type, description, links_to}] (e.g. from Confluence);
+    doc: {title, url} of that documentation. name is the snake_case dataset name, e.g. 'support_tickets'.
     """
-    return _safe(_stage, kind, name, filename, content, url, table, query)
+    return _safe(_stage, kind, name, filename, content, url, table, query, docs, doc)
 
 
 @mcp.tool()

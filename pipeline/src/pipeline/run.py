@@ -120,7 +120,7 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
         "daily_revenue": lambda: gold.build_daily_revenue(gold_tables["sales"]),
         "review_insights": lambda: gold.build_review_insights(reviews, gold_tables["sales"]),
     }
-    available = {f"silver.{k}": v for k, v in silver_tables.items()}
+    available = {f"silver.{k}": v for k, v in {**silver_tables, **onboarded_silver}.items()}
     enrichments: dict[str, list[dict]] = {}
     for spec in specs:
         if spec["name"] in onboarded_silver and spec["feed"].split(".", 1)[1] in builders:

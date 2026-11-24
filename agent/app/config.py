@@ -7,3 +7,8 @@ LLM_TEMPERATURE = float(t) if (t := os.getenv("LLM_TEMPERATURE")) else None
 MCP_URL = os.getenv("MCP_URL", "http://localhost:8000/mcp")
 PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8090").rstrip("/")
 CORS_ORIGINS = [o for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o]
+# Confluence for documented source schemas. Without an API token the bundled mock is assumed (no auth).
+CONFLUENCE_URL = os.getenv("CONFLUENCE_URL", "").rstrip("/").removesuffix("/wiki")
+CONFLUENCE_EMAIL = os.getenv("CONFLUENCE_EMAIL", "")
+CONFLUENCE_API_TOKEN = os.getenv("CONFLUENCE_API_TOKEN", "")
+CONFLUENCE_SPACE = os.getenv("CONFLUENCE_SPACE", "DATA")
