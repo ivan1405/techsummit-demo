@@ -86,6 +86,14 @@ Each gold dataset has a contract in `pipeline/src/pipeline/contracts.py`: owner,
 
 Every column in the **Data dictionary** has a **?** button, and a traced column in **Lineage** has **Ask about this column**. Both open the chat with "How is `<dataset>.<column>` calculated and where does it come from?". The answer comes from the MCP tool `explain_column`: the description and profile, each upstream hop with its transformation, downstream uses, the data quality rules of the job that builds the column, and the dataset's contract status. Demo mode answers any question that contains a `layer.dataset.column` reference.
 
+### Scheduled runs and late-source alerts
+
+The pipeline API runs the pipeline on a schedule. You can set it in the **Run history** tab (every 1, 5, 15 or 60 minutes) or with `SCHEDULE_MINUTES` in `.env` (0 = off). Scheduled runs appear with trigger `scheduled`.
+
+Each core source has a delivery SLA (`ops.SOURCE_SLAS`: orders every 60 min, customers and reviews daily). The bundled files count as re-delivered on every run. **Simulate late delivery** moves a source's last delivery back to 3× its SLA. The next run then lands no new file for it: bronze reuses the last delivery, and the run raises a `late_source` alert. Runs also raise alerts for failed data contracts and failed onboarded sources.
+
+Alerts are stored in the `alerts` and `source_freshness` lineage tables and exposed through the MCP `get_alerts` tool. They appear in the Run history tab, in a red badge in the header, and in chat ("Is any data late?"). Set `ALERT_WEBHOOK_URL` (for example a Slack incoming webhook) to receive each run's alerts. **Deliver now** ends the simulation.
+
 ### Personal data (PII) tags and masking
 
 The pipeline tags personal data in `data_dictionary`. Columns are tagged by name (`pii`: email, name, phone, address or birth_date), and the tag is carried downstream through column lineage. For example, `gold.sales.customer_name` inherits `name` from `silver.customers.full_name`; `pii_origin` points at the original column. Aggregates such as counts are not tagged. The dictionary shows a **PII** chip and has a "Personal data only" filter.
