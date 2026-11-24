@@ -121,6 +121,7 @@ async def impact(req: ImpactRequest):
 class SourceRequest(BaseModel):
     kind: str
     name: str
+    connection: str = ""
     filename: str = ""
     content: str = ""
     url: str = ""
@@ -146,7 +147,38 @@ async def _checked(tool: str, /, **args):
 
 @app.post("/api/sources")
 async def stage_source(req: SourceRequest):
-    return await _checked("stage_source", **req.model_dump())
+    if req.kind != "connection":
+        return await _checked("stage_source", **req.model_dump(exclude={"connection"}))
+    sample = await _pipeline("POST", f"/connections/{req.connection}/sample",
+                             json={"name": req.name, "table": req.table, "query": req.query})
+    return await _checked("stage_source", kind="records", name=req.name, filename=sample["label"],
+                          content=json.dumps(sample["rows"], default=str))
+
+
+class ConnectionRequest(BaseModel):
+    name: str
+    url: str
+    description: str = ""
+
+
+@app.get("/api/connections")
+async def connections():
+    return await _pipeline("GET", "/connections")
+
+
+@app.post("/api/connections")
+async def save_connection(req: ConnectionRequest):
+    return await _pipeline("POST", "/connections", json=req.model_dump())
+
+
+@app.delete("/api/connections/{name}")
+async def delete_connection(name: str):
+    return await _pipeline("DELETE", f"/connections/{name}")
+
+
+@app.get("/api/connections/{name}/schema")
+async def connection_schema(name: str):
+    return await _pipeline("GET", f"/connections/{name}/schema")
 
 
 @app.post("/api/sources/suggest")
@@ -186,6 +218,9 @@ async def accept_source(req: AcceptRequest):
     if check["status"] == "fail":
         raise HTTPException(400, "Validation failed: fix the failing links before implementing.")
     spec = {**req.model_dump(exclude={"content"}), "feed": check["feed"]}
+    if req.kind == "connection":
+        staged = await _checked("get_staged_source", name=req.name)
+        spec["label"] = staged["dataset"].removeprefix("source.")
     return await _pipeline("POST", "/sources", json={"spec": spec, "content": req.content})
 
 

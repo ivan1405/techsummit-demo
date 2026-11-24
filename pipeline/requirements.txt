@@ -4,3 +4,4 @@ pyarrow==26.0.1
 langchain-openai==1.8.5
 langchain-anthropic==1.7.12
 psycopg[binary]==3.2.13
+pymysql==1.1.2

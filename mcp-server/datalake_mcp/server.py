@@ -122,8 +122,10 @@ def _stage(kind: str, name: str, filename: str, content: str, url: str, table: s
         label, data = f"{name}.json", sources.read_json(content)
     elif kind == "database":
         label, data = f"{name}.db", sources.read_db(url, table, query)
+    elif kind == "records":
+        label, data = filename or f"{name}.db", sources.read_json(content)
     else:
-        raise sources.SourceError("kind must be file, json or database.")
+        raise sources.SourceError("kind must be file, json, database or records.")
     return staged.stage(name, kind, label, data)
 
 
@@ -134,7 +136,8 @@ def stage_source(kind: str, name: str, filename: str = "", content: str = "", ur
 
     kind='file' (filename .csv/.json/.jsonl + content), kind='json' (content = a JSON object or array)
     or kind='database' (url postgresql://... or sqlite:///..., plus a table or a single SELECT query;
-    read-only, at most 5000 rows). name is the snake_case dataset name, e.g. 'support_tickets'.
+    read-only, at most 5000 rows), or kind='records' (content = JSON array already read from a named
+    connection, filename = its source label). name is the snake_case dataset name, e.g. 'support_tickets'.
     """
     return _safe(_stage, kind, name, filename, content, url, table, query)
 

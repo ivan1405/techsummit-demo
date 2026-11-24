@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 import ImpactGraph, { Legend } from "./ImpactGraph.jsx";
+import ConnectionPicker from "./Connections.jsx";
 
-const KINDS = { file: "File upload", json: "JSON object", database: "Database" };
+const KINDS = { file: "File upload", json: "JSON object", connection: "Saved connection", database: "Database URL" };
 const RELATIONS = { join_key: "Join key", maps_to: "Maps to", new: "New attribute" };
 const CHECK_CLASS = { ok: "status-added", warn: "status-impacted", fail: "status-broken" };
 const DB_HINT = "postgresql://reader:reader@source-db:5432/erp";
@@ -20,7 +21,7 @@ function download(payload) {
 }
 
 export default function AddSource({ onClose, onImplemented }) {
-  const [form, setForm] = useState({ kind: "file", name: "", filename: "", content: "", url: "", table: "", query: "" });
+  const [form, setForm] = useState({ kind: "file", name: "", filename: "", content: "", url: "", table: "", query: "", connection: "" });
   const [source, setSource] = useState(null);
   const [links, setLinks] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -121,6 +122,12 @@ export default function AddSource({ onClose, onImplemented }) {
               <input type="file" name="file" accept=".csv,.json,.jsonl" onChange={readFile} required={!form.content} />
             </label>
           )}
+          {form.kind === "connection" && form.table && (
+            <label>
+              Table
+              <input name="table" value={form.table} onChange={set("table")} />
+            </label>
+          )}
           {form.kind === "database" && (
             <>
               <label className="wide">
@@ -134,13 +141,17 @@ export default function AddSource({ onClose, onImplemented }) {
             </>
           )}
         </div>
+        {form.kind === "connection" && (
+          <ConnectionPicker value={form.connection} table={form.table}
+            onChange={(patch) => setForm({ ...form, ...patch, name: form.name || (patch.table ? patch.table.split(".").pop().toLowerCase().replace(/[^a-z0-9_]/g, "_") : "") })} />
+        )}
         {form.kind === "json" && (
           <label className="block">
             JSON object or array
             <textarea name="content" rows={6} value={form.content} onChange={set("content")} placeholder={JSON_HINT} required />
           </label>
         )}
-        {form.kind === "database" && (
+        {(form.kind === "database" || form.kind === "connection") && (
           <label className="block">
             …or a SELECT query
             <textarea name="query" rows={2} value={form.query} onChange={set("query")} placeholder="SELECT * FROM support_tickets WHERE opened_on > '2026-07-01'" />

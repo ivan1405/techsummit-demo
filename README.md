@@ -85,7 +85,7 @@ Each gold dataset has a contract in `pipeline/src/pipeline/contracts.py`: owner,
 
 In the **Data dictionary** tab, **+ Add data source** walks through:
 
-1. **Source:** upload a CSV/JSON/JSONL file, paste a JSON object, or read a database table or SELECT (`postgresql://…` or `sqlite:///…`, read-only, max 5000 rows). Try `data/samples/loyalty.json`, `data/samples/returns.csv`, or the demo Postgres: `docker compose --profile sources up`, then `postgresql://reader:reader@source-db:5432/erp`, table `support_tickets`.
+1. **Source:** upload a CSV/JSON/JSONL file, paste a JSON object, pick a table from a **saved connection**, or read a database URL directly (read-only, max 5000 rows). Try `data/samples/loyalty.json`, `data/samples/returns.csv`, or the demo Postgres: `docker compose --profile sources up`, then `postgresql://reader:reader@source-db:5432/erp`, table `support_tickets`.
 2. **Profile:** types, nulls, distinct counts and samples, like the dictionary.
 3. **Linkages:** each column is suggested as a `join_key`, `maps_to` an existing column, or a `new` attribute. Candidates come from name similarity and real value overlap with silver/gold data; with an LLM configured the model reviews them and explains each choice. Edit any relation or target.
 4. **Validate:** join keys are checked against the data (% of values found, orphan examples, whether the target is unique), and the impact graph shows the planned `source → bronze → silver → feed` lineage. Export it all as JSON.
@@ -95,6 +95,10 @@ In the **Data dictionary** tab, **+ Add data source** walks through:
    - `silver.<name>`: trimmed, typed, deduplicated; rows missing every join key are dropped (recorded in data quality).
    - Feed into a **new** gold dataset: source rows LEFT JOINed to each join-key target (clashing target columns prefixed). Feed into an **existing** gold dataset (e.g. `gold.customer_360`): the source's attributes are added via a join key the dataset already has; the key must be unique in the source.
    - Lineage, column lineage, dictionary and data quality are recorded like the core sources. Remove an onboarded source with its × chip in the dictionary.
+
+### Saved connections
+
+**Saved connection → Manage connections** stores named connection strings in `s3://registry/connections/` after a successful test. Supported: `postgresql://`, `mysql://`, `sqlite:///` and `http(s)://` CSV/JSON/JSONL files. Passwords are masked in every API response, and a schema browser lists each table and its columns so you can pick one (or write a single `SELECT`). Reads are read-only: Postgres and MySQL use read-only transactions, SQLite opens in `mode=ro`, and only one `SELECT`/`WITH` statement is accepted. Accepted sources reference the connection by name and are re-read on every pipeline run; a connection in use can't be deleted.
 
 Until accepted, staged sources live in the MCP server's memory only. Database connection strings are stored in the registry as entered (masked in the API); use a read-only demo user. MCP tools: `stage_source`, `get_staged_source`, `suggest_source_links`, `validate_source_links` (not offered to the chat agent).
 
