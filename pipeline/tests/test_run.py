@@ -40,3 +40,18 @@ def test_full_pipeline_writes_all_layers_and_lineage(lake):
 
     run(lake.settings, lake)
     assert len(lake.read_parquet("lineage", "lineage_runs")) == 2
+
+
+def test_pipeline_writes_data_dictionary_for_every_layer(lake):
+    summary = run(lake.settings, lake)
+
+    dd = lake.read_parquet("lineage", "data_dictionary")
+    assert set(dd["run_id"]) == {summary["run_id"]}
+    assert {"bronze.orders", "silver.reviews", "gold.customer_360"} <= set(dd["dataset"])
+    revenue = dd[(dd.dataset == "gold.customer_360") & (dd.column_name == "revenue")].iloc[0]
+    assert revenue["description"].startswith("Completed revenue")
+    assert revenue["upstream"] == "gold.sales.amount, gold.sales.status"
+    raw = dd[(dd.dataset == "bronze.orders") & (dd.column_name == "unit_price")].iloc[0]
+    assert raw["upstream"] == "source.orders.csv.unit_price" and raw["sample_values"]
+    business = dd[~dd.column_name.str.startswith("_")]
+    assert (business["description"] != "").all(), business[business["description"] == ""][["dataset", "column_name"]]

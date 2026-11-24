@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from . import bronze, gold, silver
+from . import bronze, dictionary, gold, silver
 from .config import Settings
 from .lake import Lake
 from .lineage import LineageRecorder
@@ -34,12 +34,17 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
 
     log.info("BRONZE: landing raw sources")
     landed: dict[str, str] = {}
+    dictionary_rows: list[dict] = []
     for source, filename in bronze.SOURCES.items():
         with rec.job(f"bronze_{source}", "bronze", f"Land raw {filename} as-is in the bronze bucket") as job:
             key, rows = bronze.ingest_one(lake, settings.sources_dir, source, run_ts)
             job.input(f"source.{filename}", rows)
             job.output(f"bronze.{source}", rows=rows)
             landed[source] = key
+        raw_df = bronze.read_frame(filename, lake.get_bytes(settings.bronze_bucket, key))
+        dictionary_rows += dictionary.profile(
+            f"bronze.{source}", raw_df,
+            {c: [(f"source.{filename}", c, "landed as-is")] for c in raw_df.columns}, rec.run_id)
 
     log.info("SILVER: filter, clean and AI enrichment (provider=%s)", settings.llm_provider)
     cleaners = {
@@ -56,9 +61,11 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
             df, dropped = clean(raw)
             job.dropped(dropped)
             source_uri = f"s3://{settings.bronze_bucket}/{landed[name]}"
-            lake.write_parquet(settings.silver_bucket, name, _with_metadata(df, rec.run_id, processed_at, source_uri))
+            stored = _with_metadata(df, rec.run_id, processed_at, source_uri)
+            lake.write_parquet(settings.silver_bucket, name, stored)
             job.output(f"silver.{name}", df, columns=silver.COLUMN_LINEAGE[name])
             silver_tables[name] = df
+        dictionary_rows += dictionary.profile(f"silver.{name}", stored, silver.COLUMN_LINEAGE[name], rec.run_id)
 
     log.info("GOLD: merge and combine into business datasets")
     orders, customers, reviews = (silver_tables[k] for k in ("orders", "customers", "reviews"))
@@ -76,16 +83,19 @@ def run(settings: Settings | None = None, lake: Lake | None = None) -> dict:
             for src in gold.GOLD_INPUTS[name]:
                 job.input(src, len(available[src]))
             df = build()
-            lake.write_parquet(settings.gold_bucket, name, _with_metadata(df, rec.run_id, processed_at))
+            stored = _with_metadata(df, rec.run_id, processed_at)
+            lake.write_parquet(settings.gold_bucket, name, stored)
             job.output(f"gold.{name}", df, columns=gold.COLUMN_LINEAGE[name])
             gold_tables[name] = df
             available[f"gold.{name}"] = df
+        dictionary_rows += dictionary.profile(f"gold.{name}", stored, gold.COLUMN_LINEAGE[name], rec.run_id)
 
     log.info("LINEAGE: persisting OpenLineage events and lineage tables")
     lake.put_bytes(settings.lineage_bucket, f"events/run_id={rec.run_id}/events.jsonl",
                    "\n".join(json.dumps(e) for e in rec.events).encode())
     for table, df in rec.tables().items():
         lake.append_parquet(settings.lineage_bucket, table, df)
+    lake.append_parquet(settings.lineage_bucket, "data_dictionary", dictionary.table(dictionary_rows))
 
     summary = {
         "run_id": rec.run_id,
