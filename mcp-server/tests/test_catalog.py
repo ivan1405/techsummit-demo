@@ -185,3 +185,25 @@ def test_impact_if_missing_skips_existing_columns(dict_catalog):
     rep = dict_catalog.impact_analysis([{"type": "add_column", "dataset": "gold.sales", "column": "amount",
                                          "if_missing": True}])
     assert rep["summary"]["added"] == 0
+
+
+def test_contracts_combine_checks_and_freshness():
+    from datetime import datetime, timezone
+
+    t = pa.Table.from_pylist
+    cat = Catalog.from_tables({
+        "lineage_runs": ("lineage", t([{"run_id": RUN, "started_at": "2026-01-01T10:00:00+00:00"}])),
+        "lineage_jobs": ("lineage", t([{"run_id": RUN, "job_name": f"gold_{n}", "layer": "gold", "description": "",
+                                        "inputs": "", "outputs": f"gold.{n}", "rows_in": 1, "rows_out": 1,
+                                        "rows_dropped": 0, "status": "COMPLETE", "started_at": "x",
+                                        "ended_at": "2026-01-01T10:00:00+00:00"} for n in ("a", "b", "c")])),
+        "contract_checks": ("lineage", t([
+            {"run_id": RUN, "dataset": f"gold.{n}", "owner": "o", "check": "row_count", "expectation": "1..9",
+             "observed": "1", "status": st, "max_age_minutes": age}
+            for n, st, age in (("a", "pass", 60), ("b", "pass", 20), ("c", "fail", 600))])),
+    })
+    res = cat.contracts(now=datetime(2026, 1, 1, 10, 30, tzinfo=timezone.utc))
+    by = {d["dataset"]: d for d in res["datasets"]}
+    assert (by["gold.a"]["status"], by["gold.a"]["freshness"]) == ("green", "fresh")
+    assert (by["gold.b"]["status"], by["gold.b"]["freshness"]) == ("amber", "stale")
+    assert by["gold.c"]["status"] == "red" and by["gold.c"]["failed"] == 1 and by["gold.a"]["age_minutes"] == 30.0

@@ -83,6 +83,14 @@ def get_data_quality(run_id: str = "") -> str:
 
 
 @mcp.tool()
+def get_contracts() -> str:
+    """Data-contract status of every gold dataset: owner, checks (row count, schema, types, not-null,
+    unique key) of the latest run, and freshness vs. the contract's max age. status is green, amber
+    (stale) or red (failed check or expired). Use it to answer 'can I trust this table?'."""
+    return _safe(catalog.contracts)
+
+
+@mcp.tool()
 def get_data_dictionary(dataset: str = "", search: str = "") -> str:
     """Data dictionary of every bronze/silver/gold dataset: description, row count and, per column, type,
     business description, null %, distinct count, sample values and upstream columns.
