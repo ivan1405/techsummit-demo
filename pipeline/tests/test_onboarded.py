@@ -82,5 +82,15 @@ def test_preview_rejects_non_unique_key_into_existing_dataset(lake, tmp_path):
         onboarded.check_spec({**spec, "feed": "silver.x"})
 
 
+def test_clean_keeps_rows_with_at_least_one_join_key():
+    import pandas as pd
+    raw = pd.DataFrame({"a": ["1", None, None, "1"], "b": ["x", "y", None, "x"], "n": ["1", "2", "3", "1"]}).astype("string")
+    spec = {"name": "t", "links": [{"source_column": "a", "relation": "join_key", "target": "silver.c.a"},
+                                   {"source_column": "b", "relation": "join_key", "target": "silver.d.b"}]}
+    df, dropped, _ = onboarded.clean(raw, spec)
+    assert len(df) == 2 and dropped == {"duplicate_row": 1, "null_join_keys": 1}
+    assert str(df["n"].dtype).lower().startswith("int")
+
+
 def test_public_masks_database_password():
     assert onboarded.public({"url": "postgresql://reader:secret@db:5432/erp"})["url"] == "postgresql://reader:***@db:5432/erp"

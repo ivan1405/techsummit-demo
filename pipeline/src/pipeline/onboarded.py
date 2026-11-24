@@ -180,7 +180,7 @@ def joins(spec: dict) -> list[tuple[str, str, str]]:
 
 
 def clean(raw: pd.DataFrame, spec: dict) -> tuple[pd.DataFrame, dict[str, int], ColumnLineage]:
-    """Trim text, blank -> null, numeric typing, drop duplicate rows and rows missing a join key."""
+    """Trim text, blank -> null, numeric typing, drop duplicate rows and rows missing every join key."""
     df = raw.apply(lambda s: s.str.strip()).replace({"": None})
     for col in df.columns:
         values = df[col].dropna()
@@ -188,11 +188,11 @@ def clean(raw: pd.DataFrame, spec: dict) -> tuple[pd.DataFrame, dict[str, int], 
             df[col] = pd.to_numeric(df[col])
     dropped = {"duplicate_row": int(df.duplicated().sum())}
     df = df.drop_duplicates()
-    for col, _, _ in joins(spec):
-        if col in df.columns:
-            mask = df[col].isna()
-            dropped[f"null_{col}"] = int(mask.sum())
-            df = df[~mask]
+    keys = [col for col, _, _ in joins(spec) if col in df.columns]
+    if keys:
+        mask = df[keys].isna().all(axis=1)
+        dropped["null_join_keys"] = int(mask.sum())
+        df = df[~mask]
     lineage = {c: [(f"bronze.{spec['name']}", c, "trimmed, typed, deduplicated")] for c in df.columns}
     return df.reset_index(drop=True), dropped, lineage
 
