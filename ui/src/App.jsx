@@ -6,6 +6,7 @@ import Impact from "./components/Impact.jsx";
 import Lineage from "./components/Lineage.jsx";
 import Quality from "./components/Quality.jsx";
 import Runs from "./components/Runs.jsx";
+import Tour from "./components/Tour.jsx";
 
 const TABS = { chat: "Chat", lineage: "Lineage", dictionary: "Data dictionary", impact: "Impact analysis", quality: "Data quality", runs: "Run history" };
 
@@ -27,6 +28,11 @@ export default function App() {
   const setRole = (next) => {
     storeRole(next);
     setRoleState(next);
+  };
+  const [touring, setTouring] = useState(() => new URLSearchParams(location.search).has("tour"));
+  const closeTour = () => {
+    setTouring(false);
+    history.replaceState(null, "", location.pathname + location.hash);
   };
   const [question, setQuestion] = useState(null);
   const ask = (text) => {
@@ -90,6 +96,7 @@ export default function App() {
               ))}
             </select>
           </label>
+          <button className="theme-toggle" onClick={() => setTouring(true)} aria-pressed={touring}>Tour</button>
           <button className="theme-toggle" onClick={toggleTheme} aria-pressed={dark}>
             {dark ? "Light" : "Dark"} mode
           </button>
@@ -103,6 +110,7 @@ export default function App() {
         {tab === "quality" && <Quality />}
         {tab === "runs" && <Runs onAlerts={refreshAlerts} />}
       </main>
+      {touring && <Tour onClose={closeTour} onTab={setTab} onAsk={ask} />}
     </div>
   );
 }
