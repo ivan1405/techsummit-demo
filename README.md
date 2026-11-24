@@ -59,6 +59,7 @@ Every number in a gold table can be traced back to the raw file it came from:
 | Table | Content |
 |---|---|
 | `lineage_runs` | One row per pipeline run |
+| `lineage_outputs` | Rows and column count of every dataset written, per run |
 | `lineage_jobs` | One row per job: inputs, outputs, rows in/out/dropped, status, duration |
 | `lineage_edges` | Dataset to dataset edges |
 | `lineage_columns` | Column to column edges with the transformation applied |

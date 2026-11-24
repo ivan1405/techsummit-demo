@@ -40,6 +40,10 @@ def test_full_pipeline_writes_all_layers_and_lineage(lake):
 
     run(lake.settings, lake)
     assert len(lake.read_parquet("lineage", "lineage_runs")) == 2
+    outputs = lake.read_parquet("lineage", "lineage_outputs")
+    assert outputs["run_id"].nunique() == 2
+    latest = outputs[outputs["run_id"] == outputs["run_id"].iloc[-1]].set_index("dataset")
+    assert latest.loc["gold.customer_360", "rows"] > 0 and latest.loc["silver.orders", "columns"] > 0
 
 
 def test_pipeline_writes_data_dictionary_for_every_layer(lake):
