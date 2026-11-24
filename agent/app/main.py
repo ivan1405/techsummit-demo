@@ -3,13 +3,15 @@
 import json
 import logging
 
+import httpx
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel
 
 from . import linker, mcp_tools
-from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER
+from .config import CORS_ORIGINS, LLM_MODEL, LLM_PROVIDER, PIPELINE_URL
 from .graph import build_graph
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -158,6 +160,43 @@ async def suggest_links(req: LinksRequest):
 @app.post("/api/sources/validate")
 async def validate_links(req: LinksRequest):
     return await _checked("validate_source_links", name=req.name, links=req.links, feed=req.feed)
+
+
+class AcceptRequest(SourceRequest):
+    links: list[dict]
+    feed: str = ""
+
+
+async def _pipeline(method: str, path: str, **kwargs):
+    try:
+        async with httpx.AsyncClient(timeout=300) as client:
+            res = await client.request(method, f"{PIPELINE_URL}{path}", **kwargs)
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, f"Pipeline API unreachable: {exc}") from exc
+    body = res.json()
+    if res.status_code >= 400:
+        raise HTTPException(400 if res.status_code < 500 else 502, body.get("detail", res.text))
+    return body
+
+
+@app.post("/api/sources/accept")
+async def accept_source(req: AcceptRequest):
+    """Re-validate the confirmed links, then register the source and re-run the pipeline."""
+    check = await _checked("validate_source_links", name=req.name, links=req.links, feed=req.feed)
+    if check["status"] == "fail":
+        raise HTTPException(400, "Validation failed: fix the failing links before implementing.")
+    spec = {**req.model_dump(exclude={"content"}), "feed": check["feed"]}
+    return await _pipeline("POST", "/sources", json={"spec": spec, "content": req.content})
+
+
+@app.get("/api/sources/registered")
+async def registered_sources():
+    return await _pipeline("GET", "/sources")
+
+
+@app.delete("/api/sources/registered/{name}")
+async def remove_source(name: str):
+    return await _pipeline("DELETE", f"/sources/{name}")
 
 
 @app.get("/api/tables")
