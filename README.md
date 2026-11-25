@@ -39,6 +39,8 @@ No LLM key is needed. Other targets:
 | http://localhost:8000/mcp | MCP server (streamable HTTP) |
 | http://localhost:8333 | SeaweedFS S3 endpoint (the data lake) |
 
+All ports are published on `127.0.0.1` only, so nothing is reachable from your network. Set `BIND_HOST=0.0.0.0` in `.env` only if you deliberately want to expose the stack (it uses demo credentials).
+
 ## Architecture
 
 ```mermaid
